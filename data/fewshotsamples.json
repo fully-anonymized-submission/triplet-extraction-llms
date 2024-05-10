@@ -1,0 +1,10 @@
+[
+    {"role": "user", "content": "You will extract the subject-verb-object triplets from the text and return them in the form [(subject_1; verb_1; object_1), (subject_2; verb_2; object_2), ..., (subject_n; verb_n; object_n)]. We want the subjects and objects in the triplets to be specific, they cannot be pronouns or generic nouns. The first text is: \n Ever since the Turing Test was proposed in the 1950s, humans have explored the mastering of language intelligence by machine. Language is essentially a complex, intricate system of human expressions governed by grammatical rules."},
+    {"role": "assistant", "content": "[(turing test; proposed in; 1950s), (human; explored; language intelligence), (language; is; system of human expressions), (grammatic rule; govern; language)]}"},
+    {"role": "user", "content": "The next text is: \n Currently, LLMs are mainly built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs adopt similar Transformer architectures and pre-training objectives (e.g., lan- guage modeling) as small language models."},
+    {"role": "assistant", "content": "[(large language model; built upon; transformer architecture), (multi-head attention layer; stacked in; deep neural network), (large language model; adopt; transformer architecture)]"},
+    {"role": "user", "content": "The next text is: \n After collecting a large amount of text data, it is essential to preprocess the data for constructing the pre-training corpus, especially removing noisy, redundant, irrelevant, and potentially toxic data [56, 64, 212], which may largely affect the capacity and performance of LLMs."},
+    {"role": "assistant", "content": "[(preprocessing; remove; noisy data), (preprocessing; remove; redundant data), (preprocessing; remove; irrelevant data), (preprocessing; remove; toxic data), (noisy data; affect; performance large language model), (redundant data; affect; performance large language model), (irrelevant data; affect; performance large language model), (toxic data; affect; performance large language model)]"}
+]
+
+

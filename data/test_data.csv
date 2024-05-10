@@ -1,0 +1,138 @@
+﻿"• Data scheduling.
+With the preprocessed data, the next step is to determine the data mixture and the specific order of data for pre-training LLMs.
+To determine both settings, a practical way is to first train several small language models with multiple candidate plans and then select a good plan among them [59].
+Overall, it is more difficult to find a suitable data curriculum.
+In practice, one can monitor the performance of intermediate model checkpoints on specific evaluation benchmarks, and dynamically tune the data mix- ture and distribution during pre-training.
+In this process, it is also useful to explore the potential relations between data sources and model abilities to instruct the design of data curriculum.","[(evaluation benchmark; monitor; performance model checkpoint), (candidate plan; train; language model)]"
+"Encoder-decoder Architecture.
+The vanilla Transformer model is built on the encoder-decoder architecture [22], which consists of two stacks of Transformer blocks as the encoder and decoder, respectively.
+The encoder adopts stacked multi-head self-attention layers to encode the input sequence for generating its latent representations, while the decoder performs cross-attention on these representa- tions and autoregressively generates the target sequence.
+Encoder-decoder PLMs (e.g., T5 [82] and BART [24]) have shown effectiveness on a variety of NLP tasks.
+So far, there are only a small number of LLMs that are built based on the encoder-decoder architecture, e.g., Flan-T5 [69].
+We leave a detailed discussion about the architecture selection in Section 4.2.6.","[(transformer; built on; encoder-decoder architecture), (encoder-decoder architecture; consists; transformer blocks), (encoder; adopts; multi-head self-attention), (encoder; encode; sequence), (encoder; generate; latent representation), (decoder; performs; cross-attention), (decoder; generate; sequence)]"
+"Causal Decoder Architecture.
+The causal decoder archi- tecture incorporates the unidirectional attention mask, to guarantee that each input token can only attend to the past tokens and itself.
+The input and output tokens are processed in the same fashion through the decoder.
+As representative language models of this architecture, the GPT-series models [26, 55, 122] are developed based on the causal-decoder architecture.
+In particular, GPT-3 [55] has successfully demonstrated the effectiveness of this ar- chitecture, also showing an amazing in-context learning capability of LLMs.
+Interestingly, GPT-1 [122] and GPT- 2 [26] do not exhibit such superior abilities as those in GPT-3, and it seems that scaling plays an important role in increasing the model capacity of this model architecture.
+So far, the causal decoders have been widely adopted as the architecture of LLMs by various existing LLMs, such as OPT [90], BLOOM [78], and Gopher [64].
+Note that both the causal decoder and prefix decoder discussed next belong 23 to decoder-only architectures.
+When mentioning “decoder- only architecture”, it mainly refers to the causal decoder architecture in existing literature, unless specified.","[(causal decoder; incorporates; attention mask), (generative pre-trained transformer; based on; causal decoder), (generative pre-trained transformer 3; demonstrate; effectiveness causal decoder architecture), (generative pre-trained transformer 3; show; in-context learning), (scaling; increase; model capacity), (open pre-trained transformer; adopt; causal decoder), (bloom; adopt; causal decoder), (gopher; adopt; causal decoder)]"
+"Prefix Decoder Architecture.
+The prefix decoder architec- ture (a.k.a., non-causal decoder [244]) revises the masking mechanism of causal decoders, to enable performing bidi- rectional attention over the prefix tokens [245] and unidi- rectional attention only on generated tokens.
+In this way, like the encoder-decoder architecture, the prefix decoders can bidirectionally encode the prefix sequence and autore- gressively predict the output tokens one by one, where the same parameters are shared during encoding and decoding.
+Instead of pre-training from scratch, a practical suggestion is to continually train causal decoders and then convert them into prefix decoders for accelerating convergence [29], e.g., U-PaLM [118] is derived from PaLM [56].
+Existing rep- resentative LLMs based on prefix decoders include GLM- 130B [93] and U-PaLM [118].","[(prefix decoder; perform; bidirectional attention), (prefix decoder architecture; perform; unidirectional attention), (prefix decoder; encode; prefix sequence), (prefix decoder; predict; output tokens), (U pathway language model; derived from; pathway language model), (glm-130b; based on; prefix decoder), (U pathway language model; based on; prefix decoder)]"
+"Mixture-of-Experts.
+For the above three types of archi- tectures, we can further extend them via the mixture-of- experts (MoE) scaling, in which a subset of neural network weights for each input are sparsely activated, e.g., Switch Transformer [25] and GLaM [112].
+The major merit is that MoE is a flexible way to scale up the model parameter while maintaining a constant computational cost [25].
+It has been shown that substantial performance improvement can be observed by increasing either the number of experts or the total parameter size [246].
+Despite the merits, training large MoE models may suffer from instability issues due to the complex, hard-switching nature of the routing operation.
+To enhance the training stability of MoE-based language models, techniques such as selectively using high-precision tensors in the routing module or initializing the model with a smaller range have been introduced [25].
+More recently, there is widespread speculation that GPT-4 has been devel- oped based on the MoE architecture, but without official verification.","[(mixture of expert; scale; model parameter), (increase number of expert; improves; performance), (increase parameter size; improve; performance), (mixture of expert; suffer; instability issue), (selectivity; enhance; training stability), (generative pre-trained transformer 4; based on; mixture of expert)]"
+"Emergent Architectures.
+The conventional Transformer ar- chitectures typically suffer from quadratic computational complexity.
+Because of this, efficiency has become an im- portant issue when training and making inference with long inputs.
+To improve efficiency, some studies aim to devise new architectures for language modeling, including parameterized state space models (e.g., S4 [247], GSS [248], and H3 [249]), long convolutions like Hyena [250], and Transformer-like architectures that incorporate recursive up- date mechanisms (e.g., RWKV [251] and RetNet [252]).
+The key merits of these new architectures are twofold.
+First, these models can generate outputs recursively like RNNs, meaning that they only need to refer to the single previous state during decoding.
+It makes the decoding process more efficient as it eliminates the need to revisit all previous states as in conventional Transformers.
+Second, these mod- els have the capacity to encode an entire sentence in parallel like Transformers.
+This contrasts with conventional RNNs which has to encode sentences on a token-by-token basis.
+Thus, they can benefit from the parallelism of GPUs with techniques such as Parallel Scan [253, 254], FFT [250, 251], and Chunkwise Recurrent [252].
+These techniques enable models with these new architectures to be trained in a highly parallel and efficient manner.","[(transformer architecture; suffer; quadratic computational complexity), (parameterized state space model; improve; efficiency), (rwkv; incorporate; recursive update mechanism), (retnet; incorporate; recursive update mechanism), (hyena; is; long convolution), (transformer; revisit; previous states), (transformer; encode; entire sentence), (rnn; encode; sentence)]"
+"4.2.2 Detailed Configuration Since the launch of Transformer [22], various improvements have been proposed to enhance its training stability, per- formance, and computational efficiency.
+In this part, we will discuss the corresponding configurations for four major parts of the Transformer, including normalization, position embeddings, activation functions, and attention and bias.
+To make this survey more self-contained, we present the detailed formulations for these configurations in Table 6.
+Normalization Methods.
+Training instability is a challeng- ing issue for pre-training LLMs.
+To alleviate this issue, normalization is a widely adopted strategy to stabilize the training of neural networks.
+In the vanilla Transformer [22], LayerNorm [256] is employed.
+Recently, several advanced normalization techniques have been proposed as alterna- tives to LayerNorm, e.g., RMSNorm, and DeepNorm.","[(training instability; is; issue), (normalization; stabilize; training neural network), (transformer; employes; layernorm)]"
+"• LayerNorm.
+In the early research, BatchNorm [265] is a commonly used normalization method.
+However, it is difficult to deal with sequence data of variable lengths and small-batch data.
+Thus, LayerNorm [256] is introduced to conduct layerwise normalization.
+Specifically, the mean and variance over all activations per layer are calculated to re- center and re-scale the activations.","[(batchnorm; is; normalization method), (layernorm; conduct; layerwise normalization)]"
+"• RMSNorm.
+To improve the training speed of Lay- erNorm (LN), RMSNorm [257] is proposed by re-scaling the activations with only the root mean square (RMS) of the summed activations, instead of the mean and variance.
+Related research has demonstrated its superiority in training speed and performance on Transformer [266].
+Representa- tive models that adopt RMSNorm include Gopher [64] and Chinchilla [34].
+• DeepNorm.
+DeepNorm is proposed by Microsoft [258] to stabilize the training of deep Transformers.
+With Deep- Norm as residual connections, Transformers can be scaled up to 1,000 layers [258], which has shown the advantages of stability and good performance.
+It has been adopted by GLM-130B [93].","[(rmsnorm; re-scale; activation), (gopher; adopt; rmsnorm), (chinchilla; adopt; rmsnorm), (microsoft; propose; deepnorm), (deepnorm; stabilize; training transformer), (glm-130b; adopt; deepnorm)]"
+"Normalization Position.
+In addition to the normalization method, normalization position also plays a crucial role in the LLMs.
+There are generally three choices for the normal- ization position, i.e., post-LN, pre-LN, and sandwich-LN.
+• Post-LN.
+Post-LN is used in the vanilla Trans- former [22], which is placed between residual blocks.
+How- ever, existing work has found that the training of Trans- formers with post-LN tends to be instable due to the large gradients near the output layer [267].
+Thus, post-LN is rarely employed in existing LLMs except combined with other strategies (e.g., combining post-LN with pre-LN in GLM- 130B [93]).","[(transformer; use; post-ln), (post-ln; placed; between residual block), (large language model; rarely employ; post-ln)]"
+"• Pre-LN.
+Different from post-LN, pre-LN [268] is applied before each sub-layer, and an additional LN is placed before the final prediction.
+Compared with post-LN, the Trans- formers with pre-LN are more stable in training.
+However, it performs worse than the variants with post-LN [269].
+Despite the decreasing performance, most LLMs still adopt pre-LN due to the training stability.
+However, one exception is that pre-LN has been found unstable in GLM when training models more than 100B parameters [93].
+• Sandwich-LN.
+Based on pre-LN, Sandwich-LN [255] adds extra LN before the residual connections to avoid the value explosion issues in Transformer layer outputs.
+However, it has been found that Sandwich-LN sometimes fails to stabilize the training of LLMs and may lead to the collapse of training [93].
+Activation Functions.","[(pre-ln; apply; before sub-layer), (pre-ln; perform worse; post-ln), (large language model; adopt; pre-ln), (pre-ln; found; unstable in glm), (sandwich-ln; adds; ln before residual connection), (sandwich-ln; avoid; value explosion), (sandwich-ln; fail; stabilize training)]"
+"Activation Functions.
+To obtain good performance, activa- tion functions also need to be properly set in feed-forward networks.
+In existing LLMs, GeLU activations [270] are widely used.
+Specially, in the latest LLMs (e.g., PaLM and LaMDA), variants of GLU activation [262, 271] have also been utilized, especially the SwiGLU and GeGLU variants, which often achieve better performance in practice [266].
+However, compared with GeLU, they require extra parame- ters (about 50%) in the feed-forward networks [272].","[(large language model; widely use; gaussian error linear unig); (pathway language model; utilize; gated linear unit), (lambda; utilize; gated linear unit), (gated linear unit; require; extra parameter)]"
+"Position Embeddings.
+Since the self-attention modules in Transformer are permutation equivariant, position embed- dings (PE) are employed to inject absolute or relative posi- tion information for modeling sequences.
+• Absolute position embedding.
+In the vanilla Trans- former [22], absolute position embeddings are employed.
+At the bottoms of the encoder and the decoder, the absolute positional embeddings are added to the input embeddings.
+There are two variants of absolute position embeddings proposed in the vanilla Transformer [22], i.e., sinusoidal and learned position embeddings, where the latter is commonly used in existing pre-trained language models.","[(self-attention module; are; permutation equivariant), (position embedding; inject; position information), (vanilla transformer; employ; absolute position embedding), (pre-trained language model; use; learned position embedding)]"
+"• Relative position embedding.
+Unlike absolute position embeddings, relative positional embeddings are generated according to the offsets between keys and queries [273].
+A popular variant of relative PE was introduced in Transformer-XL [274, 275].
+The calculation of attention scores between keys and queries has been modified to introduce learnable embeddings corresponding to relative positions.
+T5 [82] further simplified relative positional em- beddings, which was subsequently adopted by Gopher [64].
+Specifically, it adds learnable scalars to the attention scores, where the scalars are calculated based on the distances between the positions of the query and the key.
+Compared with the absolute PE, Transformers with relative position embedding can generalize to sequences longer than those sequences for training, i.e., extrapolation [264].","[(transformer-xl; introduce; relative position embedding), (t5; simplify; relative positional embedding), (gopher; adopt; relative positional embedding), (transfomer with relative position embedding; generalize; longer sequences)]"
+"• ALiBi.
+ALiBi [264] is proposed to improve the extrap- olation of Transformer.
+Similar to relative position embed- ding, it biases attention scores with a penalty based on the 25 distances between keys and queries.
+Different from the rela- tive positional embedding methods like T5 [82], the penalty scores in ALiBi are pre-defined without any trainable pa- rameters.
+Empirical results in [264] have shown that ALiBi has a better extrapolation performance on sequences that are longer than those for training than several popular position embedding methods such as sinusoidal PE [22], RoPE [263], and T5 bias [82].
+In addition, it has been shown that ALiBi can also improve training stability in BLOOM [78].","[(alibi; improve; extrapolation of transformer), (alibi; biases; attention scores), (penalty scores alibi; are; pre-defined), (extrapolation performance alibi; is better; longer sequences), (alibi; improve; training stability)"
+"Attention.
+Attention mechanism is a critical component of Transformer.
+It allows the tokens across the sequence to interact with each other and compute the representations of the input and output sequence.
+• Full attention.
+In the vanilla Transformer [22], the atten- tion mechanism is conducted in a pairwise way, considering the relations between all token pairs in a sequence.
+It adopts scaled dot-product attention, in which the hidden states are mapped into queries, keys, and values.
+Additionally, Transformer uses multi-head attention instead of single attention, projecting the queries, keys, and values with different projections in different heads.
+The concatenation of the output of each head is taken as the final output.","[(attention mechanism; is; component transformer), (vanilla transformer attention; conduct; pairwise way), (vanilla transformer; adopt; scaled dot-product attention), (transformer; use; multi-head attention)]"
+"• Sparse attention.
+A crucial challenge of full attention is the quadratic computational complexity, which becomes a burden when dealing with long sequences.
+Therefore, various efficient Transformer variants are proposed to re- duce the computational complexity of the attention mecha- nism [278, 279].
+For instance, locally banded sparse attention (i.e., Factorized Attention [280] has been adopted in GPT- 3 [55].
+Instead of the whole sequence, each query can only attend to a subset of tokens based on the positions.","[(transformer variant; reduce; computational complexity), (generative pre-trained transformer 3; adopt; locally banded sparse attention)]"
+"• Multi-query/grouped-query attention.
+Multi-query atten- tion refers to the attention variant where different heads share the same linear transformation matrices on the keys and values [281].
+It achieves higher inference speed with only a minor sacrifice in model quality.
+Representative models with multi-query attention include PaLM [56] and StarCoder [98].
+To make a trade-off between multi-query attention and multi-head attention, grouped-query attention (GQA) [282] has been explored.
+In GQA, heads are assigned into different groups, and those heads that belong to the same group will share the same transformation matrices.
+Specially, GQA has been adopted and empirically tested in the recently released LLaMA 2 model [99].","[(multi-query attention; share; linear transformation matrices), (multi-query attention; achieve; high speed), (pathway language model; use; multi-query attention), (starcoder; use; multi-query attention), (llama 2; adopt; grouped-query attention)]"
+"• FlashAttention.
+Different from most existing approx- imate attention methods that trade-off model quality to improve the computing efficiency, FlashAttention [283] pro- poses to optimize the speed and memory consumption of attention modules on GPUs from an IO-aware perspective.
+There exist different levels of memory on modern GPUs, e.g., SRAM with a fast IO and HBM with a relatively slow IO.
+FlashAttention organizes the input into blocks and introduces necessary recomputation, both to make better use of the fast memory SRAM.
+Implemented as a fused kernel in CUDA, FlashAttention has been integrated into PyTorch [197], DeepSpeed [74], and Megatron-LM [75].
+The updated version FlashAttention-2 [284] further optimizes the work partitioning of GPU thread blocks and warps, lead- ing to around 2× speedup when compared to the original FlashAttention.","[(flashattention; optimize; speed), (flashattention, optimize, memory), (flashattention; introduce; recomputation), (pytorch; integrate; flashattention), (flashattention-2; optimize; work partitioning)]"
+"• PagedAttention.
+It has been observed when LLM are deployed on servers, GPU memory is largely occupied by cached attention key and value tensors (called KV cache).
+The major reason is that the input lengths are often varied, leading to fragmentation and over-reservation issues.
+In- spired by the classic paging technique in operating systems, PagedAttention has been proposed to improve the memory efficiency and throughput of deployed LLMs [285].
+In detail, PagedAttention partitions each sequence into subsequences, and the corresponding KV caches of these subsequences are allocated into non-contiguous physical blocks.
+The paging technique increases the GPU utilization and enables efficient memory sharing in parallel sampling.","[(attention key; occupy; gpu memory), (attention value; occupy; gpu memory), (pagedattention; improve; memory efficiency), (pagedattention; improve; throughput); (paging technique; increase; gpu utilization)]"

@@ -1,0 +1,985 @@
+﻿"Abstract—Ever since the Turing Test was proposed in the 1950s, humans have explored the mastering of language intelligence by machine.
+Language is essentially a complex, intricate system of human expressions governed by grammatical rules.
+It poses a significant challenge to develop capable artificial intelligence (AI) algorithms for comprehending and grasping a language.
+As a major approach, language modeling has been widely studied for language understanding and generation in the past two decades, evolving from statistical language models to neural language models.
+Recently, pre-trained language models (PLMs) have been proposed by pre- training Transformer models over large-scale corpora, showing strong capabilities in solving various natural language processing (NLP) tasks.
+Since the researchers have found that model scaling can lead to an improved model capacity, they further investigate the scaling effect by increasing the parameter scale to an even larger size.
+Interestingly, when the parameter scale exceeds a certain level, these enlarged language models not only achieve a significant performance improvement, but also exhibit some special abilities (e.g., in- context learning) that are not present in small-scale language models (e.g., BERT).
+To discriminate the language models in different parameter scales, the research community has coined the term large language models (LLM) for the PLMs of significant size (e.g., containing tens or hundreds of billions of parameters).
+Recently, the research on LLMs has been largely advanced by both academia and industry, and a remarkable progress is the launch of ChatGPT (a powerful AI chatbot developed based on LLMs), which has attracted widespread attention from society.
+The technical evolution of LLMs has been making an important impact on the entire AI community, which would revolutionize the way how we develop and use AI algorithms.
+Considering this rapid technical progress, in this survey, we review the recent advances of LLMs by introducing the background, key findings, and mainstream techniques.
+In particular, we focus on four major aspects of LLMs, namely pre-training, adaptation tuning, utilization, and capacity evaluation.
+Furthermore, we also summarize the available resources for developing LLMs and discuss the remaining issues for future directions.
+This survey provides an up-to-date review of the literature on LLMs, which can be a useful resource for both researchers and engineers.","[(turing test, proposed in, 1950s), (human, explored, mastering of language intelligence), (language, is, system of human expressions), (language modeling, been studied, for language understanding and generation), (pre-trained language model, showing, strong capabilities), (model scaling, lead to, improved model capacity), (researcher, investigate, scaling effect), (language model, exhibit, in-context learning), (in-context learning, not present in, small-scale language model), (research community, coined, large language model), (research on large language model, largely advanced, by both academia and industry), (chatgpt, attracted, widespread attention), (evolution of large language model, has been making, impact on artificial intelligence community), (evolution of large language model, revolutionalize, artificial intelligence algorithm)]"
+"Index Terms—Large Language Models; Emergent Abilities; Adaptation Tuning; Utilization; Alignment; Capacity Evaluation ✦ 1 INTRODUCTION “The limits of my language mean the limits of my world.” —Ludwig Wittgenstein L ANGUAGE is a prominent ability in human beings to express and communicate, which develops in early childhood and evolves over a lifetime [3, 4].
+Machines, however, cannot naturally grasp the abilities of understand- ing and communicating in the form of human language, unless equipped with powerful artificial intelligence (AI) algorithms.
+It has been a longstanding research challenge to achieve this goal, to enable machines to read, write, and communicate like humans [5].
+Technically, language modeling (LM) is one of the major approaches to advancing language intelligence of machines.
+In general, LM aims to model the generative likelihood of word sequences, so as to predict the probabilities of • Version: v13 (major update on November 23, 2023).
+• GitHub link: https://github.com/RUCAIBox/LLMSurvey • Chinese version link: https://github.com/RUCAIBox/LLMSurvey/blob/ main/assets/LLM Survey Chinese.pdf • * K. Zhou and J. Li contribute equally to this work.
+• The authors are mainly with Gaoling School of Artificial Intelligence and School of Information, Renmin University of China, Beijing, China; Jian- Yun Nie is with DIRO, Universit´e de Montr´eal, Canada.
+Contact e-mail: batmanfly@gmail.com • The authors of this survey paper reserve all the copyrights of the fig- ures/tables, and any use of these materials for publication purpose must be officially granted by the survey authors.
+future (or missing) tokens.
+The research of LM has received extensive attention in the literature, which can be divided into four major development stages: • Statistical language models (SLM).","[(language, is, ability to express and communicate), (machine, cannot grasp, communicating human language), (machine, cannot grasp, understanding human language), (language modeling, advances, language intelligence of machine), (language modeling, models, generative likelihood of word sequence), (language modeling, predicts, probability of future token), (research of language modeling, received, attention)]"
+"The research of LM has received extensive attention in the literature, which can be divided into four major development stages: • Statistical language models (SLM).
+SLMs [6–9] are de- veloped based on statistical learning methods that rose in the 1990s.
+The basic idea is to build the word prediction model based on the Markov assumption, e.g., predicting the next word based on the most recent context.
+The SLMs with a fixed context length n are also called n-gram language models, e.g., bigram and trigram language models.
+SLMs have been widely applied to enhance task performance in information retrieval (IR) [10, 11] and natural language processing (NLP) [12–14].
+However, they often suffer from the curse of dimensionality: it is difficult to accurately estimate high-order language models since an exponential number of transition probabilities need to be estimated.
+Thus, specially designed smoothing strategies such as back- off estimation [15] and Good–Turing estimation [16] have been introduced to alleviate the data sparsity problem.","[(statistical learning method, developed, statistical language model), (word prediction model, based on, markov assumption), (statistical language model with fixed content length, are, n-gram language model), (statistical language model, enhance, information retrieval), (statistical language model, enhance, natural language processing), (statistical language model, suffer, curse of dimensionality), (back-off estimation, alleviate, data sparsity problem), (good-turing estimation, alleviate, data sparsity problem)]"
+"NLMs [1, 17, 18] charac- terize the probability of word sequences by neural networks, e.g., multi-layer perceptron (MLP) and recurrent neural net- works (RNNs).
+As a remarkable contribution, the work in [1] introduced the concept of distributed representation of words and built the word prediction function conditioned on the aggregated context features (i.e., the distributed word vectors).
+By extending the idea of learning effective features for text data, a general neural network approach arXiv:2303.18223v13  [cs.CL]  24 Nov 2023 2 2018 2019 2020 2021 2022 2023 Time 0 2000 4000 6000 8000 10000 GPT-1 BERT GPT-2 T5 GPT-3 Codex InstructGPT ChatGPT LLaMA GPT-4 2020 2021 2022 2023 Time 0 250 500 750 1000 1250 1500 1750 T5 GPT-3 Codex InstructGPT ChatGPT LLaMA GPT-4 (a) Query=”Language Model” 2018 2019 2020 2021 2022 2023 Time 0 2000 4000 6000 8000 10000 GPT-1 BERT GPT-2 T5 GPT-3 Codex InstructGPT ChatGPT LLaMA GPT-4 2020 2021 2022 2023 Time 0 250 500 750 1000 1250 1500 1750 T5 GPT-3 Codex InstructGPT ChatGPT LLaMA GPT-4 (b) Query=”Large Language Model” Fig.was developed to build a unified, end-to-end solution for various NLP tasks [2].
+Furthermore, word2vec [19, 20] was proposed to build a simplified shallow neural network for learning distributed word representations, which were demonstrated to be very effective across a variety of NLP tasks.
+These studies have initiated the use of language models for representation learning (beyond word sequence modeling), having an important impact on the field of NLP.","[(neural language model, characterize, probability of word sequences)]"
+"1: The trends of the cumulative numbers of arXiv papers that contain the keyphrases “language model” (since June 2018) and “large language model” (since October 2019), respectively.
+The statistics are calculated using exact match by querying the keyphrases in title or abstract by months.
+We set different x-axis ranges for the two keyphrases, because “language models” have been explored at an earlier time.
+We label the points corresponding to important landmarks in the research progress of LLMs.
+A sharp increase occurs after the release of ChatGPT: the average number of published arXiv papers that contain “large language model” in title or abstract goes from 0.40 per day to 8.58 per day (Figure 1(b)).
+Statistical LM Neural LM Pre-trained LM LLM Task  solving capacity  1990s 2013 2018 2020 Word2vec (NPLM)!NLPS Static word representations Neural context modeling  Solve typical NLP tasks n-gram models Statistical methods   Probability estimation  Assist in specific tasks ELMO!BERT!GPT-1/2 Context-aware representations Pre-training + fine-tuning Solve various NLP tasks GPT-3/4!ChatGPT!Claude Scaling language models Prompt based completion Solve various real-world tasks General-purpose  task solver Specific task  helper Task-agnostic  feature learner Transferable  NLP task solver Fig.","[(published arxiv paper, increase, after release of chatgpt)]"
+"2: An evolution process of the four generations of language models (LM) from the perspective of task solving capacity.
+Note that the time period for each stage may not be very accurate, and we set the time mainly according to the publish date of the most representative studies at each stage.
+For neural language models, we abbreviate the paper titles of two representative studies to name the two approaches: NPLM [1] (“A neural probabilistic language model”) and NLPS [2] (“Natural language processing (almost) from scratch”).
+Due to the space limitation, we don’t list all representative studies in this figure.",[]
+"• Pre-trained language models (PLM).
+As an early at- tempt, ELMo [21] was proposed to capture context-aware word representations by first pre-training a bidirectional LSTM (biLSTM) network (instead of learning fixed word representations) and then fine-tuning the biLSTM network according to specific downstream tasks.
+Furthermore, based on the highly parallelizable Transformer architecture [22] with self-attention mechanisms, BERT [23] was proposed by pre-training bidirectional language models with specially designed pre-training tasks on large-scale unlabeled cor- pora.
+These pre-trained context-aware word representations are very effective as general-purpose semantic features, which have largely raised the performance bar of NLP tasks.
+This study has inspired a large number of follow-up work, which sets the “pre-training and fine-tuning” learning paradigm.
+Following this paradigm, a great number of stud- ies on PLMs have been developed, introducing either differ- ent architectures [24, 25] (e.g., GPT-2 [26] and BART [24]) or improved pre-training strategies [27–29].
+In this paradigm, it often requires fine-tuning the PLM for adapting to different downstream tasks.","[(embedding from language model, capture, context-aware word representation), (embedding from language model, pre-trains, bidirectional long short-term memory network), (embedding from language model, fine-tunes, bidirectional long short-term memory network), (bidirectional encoder representation from transformers, based on, transformer architecture), (context-aware word representation, are, effective general-purpose semantic feature), (context-aware word representation, raised, performance bar of natural language processing task), (pre-trained language model, require fine-tuning, for adaptation to downstream task)]"
+"• Large language models (LLM).
+Researchers find that scaling PLM (e.g., scaling model size or data size) often leads to an improved model capacity on downstream tasks 3 (i.e., following the scaling law [30]).
+A number of studies have explored the performance limit by training an ever larger PLM (e.g., the 175B-parameter GPT-3 and the 540B- parameter PaLM).
+Although scaling is mainly conducted in model size (with similar architectures and pre-training tasks), these large-sized PLMs display different behaviors from smaller PLMs (e.g., 330M-parameter BERT and 1.5B- parameter GPT-2) and show surprising abilities (called emer- gent abilities [31]) in solving a series of complex tasks.
+For example, GPT-3 can solve few-shot tasks through in-context learning, whereas GPT-2 cannot do well.
+Thus, the research community coins the term “large language models (LLM)”1 for these large-sized PLMs [32–35], which attract increasing research attention (See Figure 1).
+A remarkable application of LLMs is ChatGPT2 that adapts the LLMs from the GPT series for dialogue, which presents an amazing conversation ability with humans.
+We can observe a sharp increase of the arXiv papers that are related to LLMs after the release of ChatGPT in Figure 1.","[(scaling pre-trained language model, leads to, improved model capacity), (scaling, conducted in, model size), (large-sized pre-trained language model, display, different behavior), (large-sized pre-trained language model, show, surprising abilities), (generative pre-training transformer 3, solve, few-shot tasks), (generative pre-training transformer 3, use, in-context learning), (large language model, attract, increasing research attention), (chatgpt, is, application of large language models), (chatgpt, adapts, large language models for dialogue), (chatgpt, presents, conversation ability), (arxiv paper, increase, after release of chatgpt)]"
+"As discussed before, language model is not a new tech- nical concept specially for LLMs, but has evolved with the advance of artificial intelligence over the decades.
+Early lan- guage models mainly aim to model and generate text data, while latest language models (e.g., GPT-4) focus on complex task solving.
+From language modeling to task solving, it is an important leap in scientific thinking, which is the key to understand the development of language models in the re- search history.
+From the perspective of task solving, the four generations of language models have exhibited different lev- els of model capacities.
+In Figure 2, we describe the evolu- tion process of language models in terms of the task solving capacity.
+At first, statistical language models mainly assisted in some specific tasks (e.g., retrieval or speech tasks), in which the predicted or estimated probabilities can enhance the performance of task-specific approaches.
+Subsequently, neural language models focused on learning task-agnostic representations (e.g., features), aiming to reduce the efforts for human feature engineering.
+Furthermore, pre-trained language models learned context-aware representations that can be optimized according to downstream tasks.
+For the latest generation of language model, LLMs are enhanced by exploring the scaling effect on model capacity, which can be considered as general-purpose task solvers.
+To summarize, in the evolution process, the task scope that can be solved by language models have been greatly extended, and the task performance attained by language models have been significantly enhanced.","[(language model, is not, new technical concept), (language model, evolved with, advance of artificial intelligence), (early language model, generate, text data), (latest language model, focus on, complex task solving), (generations of language models, exhibit, different model capacities), (statistical language model, assist in, retrieval tasks), (statistical language model, assist in, speech tasks), (neural language model, learn, task-agnostic representations), (pre-trained language model, learn, context-aware representations), (scaling effect, enhances, large language models), (large language model, considered, general-purpose task solvers), (task performance of large language model, have, significantly enhanced)]"
+"In the existing literature, PLMs have been widely dis- cussed and surveyed [36–39], while LLMs are seldom re- viewed in a systematic way.
+To motivate our survey, we first highlight three major differences between LLMs and PLMs.
+First, LLMs display some surprising emergent abilities that may not be observed in previous smaller PLMs.
+These abili- ties are key to the performance of language models on com- plex tasks, making AI algorithms unprecedently powerful and effective.
+Second, LLMs would revolutionize the way that humans develop and use AI algorithms.
+Unlike small 1.
+Note that a LLM is not necessarily more capable than a small PLM, and emergent abilities may not occur in some LLMs.
+2. https://openai.com/blog/chatgpt/ PLMs, the major approach to accessing LLMs is through the prompting interface (e.g., GPT-4 API).
+Humans have to understand how LLMs work and format their tasks in a way that LLMs can follow.
+Third, the development of LLMs no longer draws a clear distinction between research and en- gineering.
+The training of LLMs requires extensive practical experiences in large-scale data processing and distributed parallel training.
+To develop capable LLMs, researchers have to solve complicated engineering issues, working with engineers or being engineers.","[(large language model, display, surprising emergent ability), (smaller pre-trained language model, do not display, emergent abilities), (emerging abilities, make, artificial intelligence algorithms powerful), (large language model, revolutionize, development of artificial intelligence algorithms), (human, understand, large language models), (training of large language model, requires, large-scale data processing), (training of large language model, requires, distributed parallel training)]"
+"Nowadays, LLMs are posing a significant impact on the AI community, and the advent of ChatGPT and GPT-4 leads to the rethinking of the possibilities of artificial general intelligence (AGI).
+OpenAI has published a technical article entitled “Planning for AGI and beyond”, which discusses the short-term and long-term plans to approach AGI [40], and a more recent paper has argued that GPT-4 might be considered as an early version of an AGI system [41].
+The research areas of AI are being revolutionized by the rapid progress of LLMs.
+In the field of NLP, LLMs can serve as a general-purpose language task solver (to some extent), and the research paradigm has been shifting towards the use of LLMs.
+In the field of IR, traditional search engines are challenged by the new information seeking way through AI chatbots (i.e., ChatGPT), and New Bing3 presents an initial attempt that enhances the search results based on LLMs.
+In the field of CV, the researchers try to develop ChatGPT-like vision-language models that can better serve multimodal dialogues [42–45], and GPT-4 [46] has supported multi- modal input by integrating the visual information.
+This new wave of technology would potentially lead to a prosperous ecosystem of real-world applications based on LLMs.
+For instance, Microsoft 365 is being empowered by LLMs (i.e., Copilot) to automate the office work, and OpenAI supports the use of plugins in ChatGPT for implementing special functions.","[(large language model, impact, artificial intelligence community), (chatgpt, leads to, rethinking of artificial general intelligence), (openai, discusses, artificial general intelligence), (generative pre-training transformer 4, considered as, artificial general intelligence system), (artificial intelligence, revolutionized by, large language models), (large language model, serve as, general-purpose language task solver), (artificial intelligence chatbot, challenge, traditional search engines), (large language model, enhance, search results), (vision-language model, serve, multimodal dialogues), (generative pre-training transformer 4, supported, multimodal input), (large language model, empower, microsoft 365), (large language model, automate, office work)]"
+"Despite the progress and impact, the underlying prin- ciples of LLMs are still not well explored.
+Firstly, it is mysterious why emergent abilities occur in LLMs, instead of smaller PLMs.
+As a more general issue, there lacks a deep, detailed investigation of the key factors that contribute to the superior abilities of LLMs.
+It is important to study when and how LLMs obtain such abilities [47].
+Although there are some meaningful discussions about this problem [31, 47], more principled investigations are needed to uncover the “secrets“ of LLMs.
+Secondly, it is difficult for the research community to train capable LLMs.
+Due to the huge de- mand of computation resources, it is very costly to carry out repetitive, ablating studies for investigating the effect of various strategies for training LLMs.
+Indeed, LLMs are mainly trained by industry, where many important training details (e.g., data collection and cleaning) are not revealed to the public.
+Thirdly, it is challenging to align LLMs with human values or preferences.
+Despite the capacities, LLMs are also likely to produce toxic, fictitious, or harmful con- tents.
+It requires effective and efficient control approaches to eliminating the potential risk of the use of LLMs [46].","[(principles of large language models, are not, explored), (emergent abilities, occur, in large language models), (studies for training large language models, are, costly), (large language models, are mainly trained, by industry), (important training details, are not, revealed), (aligning large laguage models, is, difficult), (large language models, produce, toxic content), (large language models, produce, fictitious content), (large language models, produce, harmful content)]"
+"Faced with both opportunities and challenges, it needs more attention on the research and development of LLMs.
+In 3. https://www.bing.com/new 4 order to provide a basic understanding of LLMs, this survey conducts a literature review of the recent advances in LLMs from four major aspects, including pre-training (how to pre- train a capable LLM), adaptation (how to effectively adapt pre-trained LLMs for better use), utilization (how to use LLMs for solving various downstream tasks) and capability evaluation (how to evaluate the abilities of LLMs and existing empirical findings).
+We thoroughly comb the literature and summarize the key findings, techniques, and methods of LLMs.
+For this survey, we also create a GitHub project website by collecting the supporting resources for LLMs, at the link https://github.com/RUCAIBox/LLMSurvey.
+We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54].
+These papers either discuss PLMs or some specific (or general) aspects of LLMs.
+Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",[]
+"The remainder of this survey is organized as follows: Section 2 introduces the background for LLMs and the evo- lution of GPT-series models, followed by the summarization of available resources for developing LLMs in Section 3.
+Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation, utilization, and capacity evaluation, respectively.
+Then, Sec- tion 8 discusses the practical guide for prompt design, and Section 9 reviews the applications of LLMs in several representative domains.
+Finally, we conclude the survey in Section 10 by summarizing the major findings and discuss the remaining issues for future work.",[]
+"2 OVERVIEW In this section, we present an overview about the back- ground of LLMs and then summarize the technical evolu- tion of the GPT-series models.
+2.1 Background for LLMs Typically, large language models (LLMs) refer to Transformer language models that contain hundreds of billions (or more) of parameters4, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57].
+LLMs exhibit strong capacities to un- derstand natural language and solve complex tasks (via text generation).
+To have a quick understanding of how LLMs work, this part introduces the basic background for LLMs, including scaling laws, emergent abilities and key techniques.","[(large language model, refer to, transformer language models), (transformer language model, contain, billions of parameters), (transformer language model, trained on, massive text data), (large language model, understand, natural language), (large language model, solve, complex tasks)]"
+"Formulation of Scaling Laws for LLMs.
+Currently, LLMs are mainly built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network.
+Existing LLMs adopt similar Trans- former architectures and pre-training objectives (e.g., lan- guage modeling) as small language models.
+However, LLMs significantly extend the model size, data size, and total 4.
+In existing literature, there is no formal consensus on the minimum parameter scale for LLMs, since the model capacity is also related to data size and total compute.
+In this survey, we take a slightly loose definition of LLMs, and mainly focus on discussing language models with a model size larger than 10B.
+compute (orders of magnification).
+Extensive research has shown that scaling can largely improve the model capacity of LLMs [26, 55, 56].
+Thus, it is useful to establish a quantita- tive approach to characterizing the scaling effect.
+Next, we introduce two representative scaling laws for Transformer language models [30, 34].","[(large language model, built upon, transformer architecture), (multi-head attention layer, stacked in, deep neural network), (large language model, adopt, transformer architecture), (large language model, extend, model size), (large language model, extend, data size), (large language model, extend, total compute), (scaling, improve, large language model capacity)]"
+"• KM scaling law5.
+In 2020, Kaplan et al. [30] (the OpenAI team) firstly proposed to model the power-law relationship of model performance with respective to three major factors, namely model size (N), dataset size (D), and the amount of training compute (C), for neural language models.
+Given a compute budget c, they empirically presented three basic formulas for the scaling law6: L(N) = Nc N αN , αN ∼ 0.076, Nc ∼ 8.8 × 1013 (1) L(D) = Dc D αD , αD ∼ 0.095, Dc ∼ 5.4 × 1013 L(C) = Cc C αC , αC ∼ 0.050, Cc ∼ 3.1 × 108 where L(·) denotes the cross entropy loss in nats, and a follow-up study [58] from OpenAI has shown that the language modeling loss can be decomposed into two parts, namely irreducible loss (the entropy of the true data distri- bution) and reducible loss (an estimate of the KL divergence between the true and model distributions).
+The three laws were derived by fitting the model performance with varied data sizes (22M to 23B tokens), model sizes (768M to 1.5B non-embedding parameters) and training compute, under some assumptions (e.g., the analysis of one factor should be not bottlenecked by the other two factors).
+They showed that the model performance has a strong dependence rela- tion on the three factors.","[(openai team, model, power-law relationship), (language modeling loss, can be, decomposed), (irreducible loss, is, entropy of data distribution), (reducible loss, is, estimate of kullback-leibler divergence)]"
+"• Chinchilla scaling law.
+As another representative study, Hoffmann et al. [34] (the Google DeepMind team) proposed an alternative form for scaling laws to instruct the compute- optimal training for LLMs.
+They conducted rigorous exper- iments by varying a larger range of model sizes (70M to 16B) and data sizes (5B to 500B tokens), and fitted a similar scaling law yet with different coefficients as below [34]: L(N, D) = E + A N α + B Dβ , (2) where E = 1.69, A = 406.4, B = 410.7, α = 0.34 and β = 0.28.
+By optimizing the loss L(N, D) under the con- straint C ≈ 6ND, they showed that the optimal allocation of compute budget to model size and data size can be derived as follows: Nopt(C) = G C 6 a , Dopt(C) = G−1 C 6 b , (3) where a = α α+β , b = β α+β and G is a scaling coefficient that can be computed by A, B, α and β.
+As analyzed in [34], 5.
+Since there was not a model trained following this law in the original paper, we took the last names of the two co-first authors to name this scaling law.
+6.
+Here, Nc, Dc and Cc are measured in the number of non- embedding parameters, the number of training tokens and the number of FP-days, respectively.
+According to the original paper [30], Cc and C should be denoted by Cmin c and Cmin, corresponding to the optimal use of compute.
+We use the simplified notations for ease of discussions.
+5 given an increase in compute budget, the KM scaling law favors a larger budget allocation in model size than the data size, while the Chinchilla scaling law argues that the two sizes should be increased in equal scales, i.e., having similar values for a and b in Equation (3).","[(scaling law, instruct, compute-optimal training), (deepmind team, conduct, experiments), (km scaling law, favors, model size)]"
+"Discussion on Scaling Laws.
+After introducing the formu- lations, we continue to discuss scaling law in the following two aspects, to enhance its understanding: • Predictable scaling.
+In practice, scaling law can be used to instruct the training of LLMs, and it has been proven feasible to reliably estimate the performance of larger mod- els based on that of smaller models, called predictable scal- ing [46].
+The benefits of predictable scaling for training LLMs are mainly twofold.
+Firstly, for large models, it is infeasible to rigorously examine various training tricks or variants, and it would be very helpful if experiences gained from small models could also apply to large models.
+For instance, small proxy models can be trained to find the optimal schedule of the data mixture for large models [59].
+Secondly, the training of large-scale models takes a long time, often suffering from issues such as training loss spike, and scaling law can be employed to monitor the training status of LLMs, e.g., identifying abnormal performance at an early time.
+Despite that scaling law characterizes a smooth trend of performance increase (or loss decrease), it also indicates that diminishing returns7 might occur as model scaling.
+An empirical study [58] from the OpenAI team has shown that representation quality or semantic content can still effectively improve even if approaching the point of diminishing returns (i.e., approaching the irreducible loss) [58].
+This finding suggests that training large models are promising for improving the performance of down- stream tasks.
+To further explore scaling effect, a potential issue is that the amount of available data for training LLMs is actually limited.
+With the ever-increasing model scale, the public text data would be soon “exhausted” for LLMs [60].
+Thus, it will be meaningful to study how scaling laws apply to a data-constrained regime [61], where data repetition or augmentation might be useful to alleviate data scarcity.","[(scaling law, use, training of large language model), (scaling law, estimate, performance of large language model), (proxy models, find, schedule of data mixture), (training of large-scale models, takes, long time), (training of large-scale models, suffers, training loss spike), (scaling law, monitor, training status large language model), (scaling law, identify, abnormal performance), (scaling law, characterize, performance increase), (scaling law, indicate, diminishing return), (representation quality, approach, diminishing return), (semantic content, approach, diminishing return), (training large model, improve, downstream task), (available data, is, limited), (public text data, is, soon exhausted), (data repetition, alleviate, data scarcity), (data augmentation, alleviate, data scarcity)]"
+"• Task-level predictability.
+Existing research of scaling laws are mostly conducted in terms of language modeling loss (e.g., per-token cross-entropy loss in nats [30]), while in practice we are more concerned about the performance of LLMs on actual tasks.
+Thus, a basic problem is that how the decrease of language modeling loss translates into the improvement of task performance [58].
+Intuitively, a model with a smaller language modeling loss tends to yield a better performance on downstream tasks, since language modeling loss can be considered as a general measure of the overall model capacity.
+GPT-4 [46] has reported that some capabilities (e.g., coding ability) can be accurately predicted via scaling law.
+Despite that, readers should be aware that a direct decrease in language modeling loss does not always indicate an improvement of model performance on downstream tasks.
+Specially, the phenomenon of inverse scaling would occur for some tasks, where task performance surprisingly becomes worse as the language modeling loss decreases [62].
+Overall, it is more difficult to explore and 7. https://en.wikipedia.org/wiki/Diminishing returns characterize task-level scaling laws, since it might be also dependent on task-related information (task metric, task difficulty, etc.).
+Furthermore, some capacities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).","[(decrease of language modeling loss, improve, downstream tasks), (language modeling loss, measures, language model capacity), (scaling law, predicts, coding ability), (decrease in language modeling, not always improve, language model performance)]"
+"Emergent Abilities of LLMs.
+In the literature [31], emergent abilities of LLMs are formally defined as “the abilities that are not present in small models but arise in large models”, which is one of the most prominent features that distin- guish LLMs from previous PLMs.
+It further introduces a notable characteristic when emergent abilities occur [31]: performance rises significantly above random when the scale reaches a certain level.
+By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 63].
+In principle, emergent abilities can be defined in relation to some complex tasks [31, 64], while we are more concerned with general abilities that can be applied to solve a variety of tasks.
+Here, we briefly introduce three typical emergent abilities for LLMs and representative models that possess such an ability8.","[(emergent abilities, arise in, large language model), (emergent abilities, not present in, small language model), (emergent abilities, resemble, phase transition)]"
+"• In-context learning.
+The in-context learning (ICL) ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can gen- erate the expected output for the test instances by com- pleting the word sequence of input text, without requiring additional training or gradient update9.
+Among the GPT- series models, the 175B GPT-3 model exhibited a strong ICL ability in general, but not the GPT-1 and GPT-2 models.
+Such an ability also depends on the specific downstream task.
+For example, the ICL ability can emerge on the arithmetic tasks (e.g., the 3-digit addition and subtraction) for the 13B GPT-3, but 175B GPT-3 even cannot work well on the Persian QA task [31].","[(generative pre-training transformer 3, introduces, in-context learning), (generative pre-training transformer 3, generate, output), (generative pre-training transformer 3, complete, word sequence), (generative pre-training transformet 3, exhibit, in-context learning), (generative pre-training transformer 1, not exhibit, in-context learning), (generative pre-training transformer 2, not exhibit, in-context learning), (in-context learning, depends on, downstream task)]"
+"• Instruction following.
+By fine-tuning with a mixture of multi-task datasets formatted via natural language descrip- tions (called instruction tuning), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 66, 67].
+With instruction tuning, LLMs are enabled to follow the task instructions for new tasks without using explicit examples, thus having an improved generalization ability.
+According to the experiments in [67], instruction-tuned LaMDA-PT [68] started to significantly outperform the untuned one on unseen tasks when the model size reached 68B, but not for 8B or smaller model sizes.
+A recent study [69] found that a model size of 62B is at least required for PaLM to perform well on various tasks in four evaluation benchmarks (i.e., MMLU, BBH, TyDiQA and MGSM), though a much smaller size might suffice for some specific tasks (e.g., MMLU).","[(large language model, perform, unseen task), (large language model, follow, task instruction), (large language model, have, generalization ability)]"
+"• Step-by-step reasoning.
+For small language models, it is usually difficult to solve complex tasks that involve 8.
+It is difficult to accurately examine the critical size for emergent abilities of LLMs (i.e., the minimum size to possess an ability), since it might vary for different models or tasks.
+Also, existing studies often test emergent abilities on very limited model sizes for a specific LLM.
+For example, PaLM is often tested with three sizes of 8B, 62B and 540B.
+It is unclear about the model performance of the untested sizes.
+9.
+In a recent study [65], it also shows that in-context learning implic- itly performs meta-optimization through the attention mechanism.
+6 multiple reasoning steps, e.g., mathematical word problems.
+In contrast, with the chain-of-thought (CoT) prompting strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer.
+This ability is speculated to be potentially obtained by training on code [33, 47].
+An empirical study [33] has shown that CoT prompting can bring performance gains (on arithmetic reasoning bench- marks) when applied to PaLM and LaMDA variants with a model size larger than 60B, while its advantage over the standard prompting becomes more evident when the model size exceeds 100B.
+Furthermore, the performance improvement with CoT prompting seems to be also varied for different tasks, e.g., GSM8K > MAWPS > SWAMP for PaLM [33].","[(small language models, cannot solve, complex tasks), (large language models, utilize, intermediate reasoning steps), (chain-of-thought prompting, bring, performance gains)]"
+"How Emergent Abilities Relate to Scaling Laws.
+In existing literature [30, 31, 34], scaling laws and emergent abilities provide two perspectives to understand the advantage of large models over small models.
+In general, scaling law (often measured by language modeling loss) describes pre- dictable performance relation with the potential effect of diminishing returns, while emergent abilities (often mea- sured by task performance) are unpredictable but very prof- itable once such abilities actually emerge.
+Since the two perspectives reflect different performance trends (continu- ous improvement v.s.
+sharp performance leap), they might lead to misaligned findings or observations.
+There are also extensive debates on the rationality of emergent abilities.
+A popular speculation is that emergent abilities might be partially attributed to the evaluation setting for special tasks (e.g., the discontinuous evaluation metrics) [70, 71]: when evaluation metrics are altered accordingly, the sharpness of the emergent ability curve would disappear.
+However, the performance of LLMs on most tasks are perceived by users naturally in a discontinuous way.
+For instance, end users prefer a reliable code generated by LLMs that can success- fully pass the test case, but are less interested in selecting a better code with fewer errors between two failed ones.
+More recently, a study [72] proposes a new evaluation setting that can enlarge the resolution of task metrics, making task performance more predictable.
+Despite these efforts, more fundamental research (e.g., grokking10) about the working mechanism of LLMs is still in need to understand the emer- gence of certain abilities.
+The subtle relation between scaling law and emergent abilities can be explained by analogy with the ability acquisition of human11.
+Take the speaking ability as an example.
+For children, language development (espe- cially infants) can be also considered as a multi-level process where “emergent abilities” occur.
+Specially, the language ability would relatively stable within a time interval, but qualitative change only occurs when evolving into another ability level (e.g., from speaking simple words to speaking simple sentences).
+Such a learning process is essentially not smooth and stable (i.e., language ability does not develop at a constant rate over time), though a child actually grows 10.
+Grokking refers that “a pattern in the data, improving generaliza- tion performance from random chance level to perfect generalization”, quoted from the original paper [73].
+11.
+This explanation is only for ease of understanding, and there is not direct evidence to connect the two points.
+every day.
+It is interesting that young parents would be often surprised by unexpected progress of the speaking ability exhibited by their babies.","[(large language model, have advantage, small language model), (scaling law, describes, performance relation), (emergent abilities, are, unpredictable), (emergent abilities, are, profitable), (task performance, measure, emergent abilities), (scaling law, reflect, continuous improvement), (emergent abilities, reflect, sharp performance leap), (performance of large language model, perceived, discontinuously), (end users, prefer, reliable code), (evaluation setting, enlarge, resolution of task metrics), (language development, considered, multi-level process), (learning process, is not, smooth), (learning process, is not, stable), (language ability, not develop, constant rate), (speaking ability, surprise, young parents)]"
+"Key Techniques for LLMs.
+It has been a long way that LLMs evolve into the current state: general and capable learners.
+In the development process, a number of impor- tant techniques are proposed, which largely improve the capacity of LLMs.
+Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.","[(large language model, evolve, general learner), (large language model, evolve, capable learner)]"
+"• Scaling.
+As discussed in previous parts, there exists an evident scaling effect in Transformer language mod- els: larger model/data sizes and more training compute typically lead to an improved model capacity [30, 34].
+As two representative models, GPT-3 and PaLM explored the scaling limits by increasing the model size to 175B and 540B, respectively.
+Since compute budget is usually limited, scaling laws can be further employed to conduct a more compute-efficient allocation of the compute resources.
+For example, Chinchilla (with more training tokens) outper- forms its counterpart model Gopher (with a larger model size) by increasing the data scale with the same compute budget [34].
+In addition, data scaling should be with careful cleaning process, since the quality of pre-training data plays a key role in the model capacity.","[(scaling effect, exist in, transformer language model), (larger model, improve, model capacity), (larger data, improve, model capacity), (training compute, improve, model capacity), (generative pre-training transformer 3, explore, scaling limit), (pathway language model, explore, scaling limit), (scaling laws, conduct, compute-efficient allocation), (chinchilla, outperform, gopher)]"
+"• Training.
+Due to the huge model size, it is very chal- lenging to successfully train a capable LLM.
+Distributed training algorithms are needed to learn the network param- eters of LLMs, in which various parallel strategies are of- ten jointly utilized.
+To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [74] and Megatron-LM [75–77].
+Also, op- timization tricks are also important for training stability and model performance, e.g., restart to overcome training loss spike [56] and mixed precision training [78].
+More recently, GPT-4 [46] proposes to develop special infrastructure and optimization methods that reliably predict the performance of large models with much smaller models.","[(distributed training algorithms, learn, network parameters), (optimization frameworks, facilitate, implementation parallel algorithms), (optimization frameworks, facilitate, deployment parallel algorithms), (training stability, needs, optimization), (model performance, needs, optimization), (generative pre-training transformer 4, develop, special infrastructure)]"
+"• Ability eliciting.
+After being pre-trained on large-scale corpora, LLMs are endowed with potential abilities as general-purpose task solvers.
+These abilities might not be explicitly exhibited when LLMs perform some specific tasks.
+As the technical approach, it is useful to design suitable task instructions or specific in-context learning strategies to elicit such abilities.
+For instance, chain-of-thought prompting has been shown to be useful to solve complex reasoning tasks by including intermediate reasoning steps.
+Furthermore, we can perform instruction tuning on LLMs with task descriptions expressed in natural language, for improving the generalizability of LLMs on unseen tasks.
+These eliciting techniques mainly correspond to the emergent abilities of LLMs, which may not show the same effect on small lan- guage models.","[(large language model, is, general-purpose task solver), (chain-of-thought prompting, solve, complex reasoning task), (chain-of-thought prompting, include, reasoning steps), (instruction tuning, improve, generalizability)]"
+"• Alignment tuning.
+Since LLMs are trained to capture the data characteristics of pre-training corpora (including both high-quality and low-quality data), they are likely to generate toxic, biased, or even harmful content for humans.
+It is necessary to align LLMs with human values, e.g., helpful, honest, and harmless.
+For this purpose, InstructGPT [66] 7 designs an effective tuning approach that enables LLMs to follow the expected instructions, which utilizes the tech- nique of reinforcement learning with human feedback [66, 79].
+It incorporates human in the training loop with elaborately designed labeling strategies.
+ChatGPT is indeed developed on a similar technique to InstructGPT, which shows a strong alignment capacity in producing high-quality, harmless re- sponses, e.g., rejecting to answer insulting questions.","[(large language model, capture, data characteristics), (large language model, generate, toxic content), (large language model, generate, biased content), (large language model, generate, harmful content), (instructgpt, design, tuning approach), (instructgpt, utilizes, reinforcement learning with human feedback), (chatgpt, show, alignment capacity), (chatgpt, produce, high-quality response), (chatgpt, produce, harmless response), (chatgpt, not answer, insulting question)]"
+"• Tools manipulation.
+In essence, LLMs are trained as text generators over massive plain text corpora, thus performing less well on the tasks that are not best expressed in the form of text (e.g., numerical computation).
+In addition, their capacities are also limited to the pre-training data, e.g., the inability to capture up-to-date information.
+To tackle these issues, a recently proposed technique is to employ external tools to compensate for the deficiencies of LLMs [80, 81].
+For example, LLMs can utilize the calculator for accurate computation [80] and employ search engines to retrieve unknown information [81].
+More recently, ChatGPT has enabled the mechanism of using external plugins (existing or newly created apps)12, which are by analogy with the “eyes and ears” of LLMs.
+Such a mechanism can broadly expand the scope of capacities for LLMs.
+In addition, many other factors (e.g., the upgrade of hardware) also contribute to the success of LLMs.
+Currently, we limit our discussion to the major technical approaches and key findings for developing LLMs.","[(large language model, is, text generator), (large language model, not perform, numerical computation), (large language model, not capture, up-to-date information), (large language model, utilize, calculator), (large language model, employ, search engine), (chatgpt, use, external plugin)]"
+"2.2 Technical Evolution of GPT-series Models Due to the excellent capacity in communicating with hu- mans, ChatGPT has ignited the excitement of the AI com- munity since its release.
+ChatGPT is developed based on the powerful GPT model with specially optimized conversation capacities.
+Considering the ever-growing interest in Chat- GPT and GPT models, we add a special discussion about the technical evolution of the GPT-series models, to briefly sum- marize the progress how they have been developed in the past years.
+Meanwhile, we drew a schematic diagram de- picting the technological evolution of the GPT-series models in Figure 4.
+The basic principle underlying GPT models is to compress the world knowledge into the decoder-only Transformer model by language modeling, such that it can recover (or memorize) the semantics of world knowledge and serve as a general-purpose task solver.
+Two key points to the success are (I) training decoder-only Transformer language models that can accurately predict the next word and (II) scaling up the size of language models.
+Overall, the research of OpenAI on LLMs can be roughly divided into the following stages13.","[(chatgpt, optimized, conversation capacities), (generative pre-trained transformer, compress, world knowledge), (generative pre-trained transformer, recover, semantics), (generative pre-trained transformer, serve, general-purpose task solver), (transformer lanugage model, predict, next word)]"
+"Early Explorations.
+According to one interview with Ilya Sutskever14 (a co-founder and chief scientist of OpenAI), the idea of approaching intelligent systems with language 12. https://openai.com/blog/chatgpt-plugins 13.
+Note that the discussion of this part can be somewhat subjective.
+The overall viewpoints and summaries are made based on the under- standing of the survey authors by reading the papers, blog articles, interview reports and APIs released by OpenAI.
+14. https://hackernoon.com/an-interview-with-ilya-sutskever-co- founder-of-openai models was already explored in the early days of Ope- nAI, while it was attempted with recurrent neural net- works (RNN) [121].
+With the advent of Transformer, OpenAI developed two initial GPT models, namely GPT-1 [122] and GPT-2 [26], which can be considered as the foundation to more powerful models subsequently i.e., GPT-3 and GPT-4.","[(openai, developed, generative pre-trained transformer), (generative pre-trained transformer, considered, foundation of powerful model)]"
+"• GPT-1.
+In 2017, the Transformer model [22] was intro- duced by Google, and the OpenAI team quickly adapted their language modeling work to this new neural network architecture.
+They released the first GPT model in 2018, i.e., GPT-1 [122], and coined the abbreviation term GPT as the model name, standing for Generative Pre-Training.
+GPT-1 was developed based on a generative, decoder-only Transformer architecture, and adopted a hybrid approach of unsupervised pretraining and supervised fine-tuning.
+GPT- 1 has set up the core architecture for the GPT-series models and established the underlying principle to model natural language text, i.e., predicting the next word.","[(google, introduce, transformer model), (openai, released, generative pre-trained transformer), (generative pre-trained transformer 1, adopted, unsupervised pretraining), (generative pre-trained transformer 1, adopted, supervised fine-tuning)]"
+"• GPT-2.
+Following a similar architecture of GPT-1, GPT-2 [26] increased the parameter scale to 1.5B, which was trained with a large webpage dataset WebText.
+As claimed in the paper of GPT-2, it sought to perform tasks via unsupervised language modeling, without explicit fine-tuning using labeled data.
+To motivate the approach, they introduced a probabilistic form for multi-task solving, i.e., p(output|input, task) (similar approaches have been adopted in [123]), which predicts the output conditioned on the input and task information.
+To model this conditional probability, language text can be naturally employed as a unified way to format input, output and task information.
+In this way, the process of solving a task can be cast as a word prediction problem for generating the solution text.
+Further, they introduced a more formal claim for this idea: “Since the (task-specific) supervised objective is the same as the unsupervised (language modeling) objective but only evaluated on a subset of the sequence, the global minimum of the unsupervised objective is also the global minimum of the supervised objective (for various tasks)” [26]15.
+A basic understanding of this claim is that each (NLP) task can be considered as the word prediction problem based on a subset of the world text.
+Thus, unsupervised language modeling could be capable in solving various tasks, if it was trained to have sufficient capacity in recovering the world text.
+These early discussion in GPT-2’s paper echoed in the interview of Ilya Sutskever by Jensen Huang: “What the neural network learns is some representation of the process that produced the text.
+This text is actually a projection of the world...the more accurate you are in predicting the next word, the higher the fidelity, the more resolution you get in this process...”16.","[(generative pre-training transformer 2, increased, parameter scale), (generative pre-trained transformer 2, trained, webtext), (generative pre-trained transformer 2, use, unsupervised language modeling), (generative pre-trained transformer 2, not use, fine-tuning), (task-specific objective, is, language modeling objective), (natural language processing task, is, word prediction problem), (unsupervised language modeling, recover, world text), (neural network, learns, representation of process), (text, projects, world)]"
+"Capacity Leap.
+Although GPT-2 is intended to be an “un- supervised multitask learner”, it overall has an inferior performance compared with supervised fine-tuning state- of-the-art methods.
+Because it has a relatively small model size, it has been widely fine-tuned in downstream tasks, especially the dialog tasks [124, 125].
+Based on GPT-2, GPT-3 15.
+To better understand this sentence, we put some explanation words in parentheses.
+16. https://lifearchitect.ai/ilya/ 8 TABLE 1: Statistics of large language models (having a size larger than 10B in this survey) in recent years, including the capacity evaluation, pre-training data scale (either in the number of tokens or storage size) and hardware resource costs.
+In this table, we only include LLMs with a public paper about the technical details.
+Here, “Release Time” indicates the date when the corresponding paper was officially released.
+“Publicly Available” means that the model checkpoints can be publicly accessible while “Closed Source” means the opposite.
+“Adaptation” indicates whether the model has been with subsequent fine-tuning: IT denotes instruction tuning and RLHF denotes reinforcement learning with human feedback.
+“Evaluation” indicates whether the model has been evaluated with corresponding abilities in their original paper: ICL denotes in-context learning and CoT denotes chain-of-thought.
+“*” denotes the largest publicly available version.
+Adaptation Evaluation Model Release Time Size (B) Base Model IT RLHF Pre-train Data Scale Latest Data Timestamp Hardware (GPUs / TPUs) Training Time ICL CoT T5 [82] Oct-2019 11 - - - 1T tokens Apr-2019 1024 TPU v3 - ✓ - mT5 [83] Oct-2020 13 - - - 1T tokens - - - ✓ - PanGu-α [84] Apr-2021 13* - - - 1.1TB - 2048 Ascend 910 - ✓ - CPM-2 [85] Jun-2021 198 - - - 2.6TB - - - - - T0 [28] Oct-2021 11 T5 ✓ - - - 512 TPU v3 27 h ✓ - CodeGen [86] Mar-2022 16 - - - 577B tokens - - - ✓ - GPT-NeoX-20B [87] Apr-2022 20 - - - 825GB - 96 40G A100 - ✓ - Tk-Instruct [88] Apr-2022 11 T5 ✓ - - - 256 TPU v3 4 h ✓ - UL2 [89] May-2022 20 - - - 1T tokens Apr-2019 512 TPU v4 - ✓ ✓ OPT [90] May-2022 175 - - - 180B tokens - 992 80G A100 - ✓ - NLLB [91] Jul-2022 54.5 - - - - - - - ✓ - CodeGeeX [92] Sep-2022 13 - - - 850B tokens - 1536 Ascend 910 60 d ✓ - GLM [93] Oct-2022 130 - - - 400B tokens - 768 40G A100 60 d ✓ - Flan-T5 [69] Oct-2022 11 T5 ✓ - - - - - ✓ ✓ BLOOM [78] Nov-2022 176 - - - 366B tokens - 384 80G A100 105 d ✓ - mT0 [94] Nov-2022 13 mT5 ✓ - - - - - ✓ - Galactica [35] Nov-2022 120 - - - 106B tokens - - - ✓ ✓ BLOOMZ [94] Nov-2022 176 BLOOM ✓ - - - - - ✓ - OPT-IML [95] Dec-2022 175 OPT ✓ - - - 128 40G A100 - ✓ ✓ LLaMA [57] Feb-2023 65 - - - 1.4T tokens - 2048 80G A100 21 d ✓ - Pythia [96] Apr-2023 12 - - - 300B tokens - 256 40G A100 - ✓ - CodeGen2 [97] May-2023 16 - - - 400B tokens - - - ✓ - StarCoder [98] May-2023 15.5 - - - 1T tokens - 512 40G A100 - ✓ ✓ LLaMA2 [99] Jul-2023 70 - ✓ ✓ 2T tokens - 2000 80G A100 - ✓ - Baichuan2 [100] Sep-2023 13 - ✓ ✓ 2.6T tokens - 1024 A800 - ✓ - QWEN [101] Sep-2023 14 - ✓ ✓ 3T tokens - - - ✓ - FLM [102] Sep-2023 101 - ✓ - 311B tokens - 192 A800 22 d ✓ - Publicly Available Skywork [103] Oct-2023 13 - - - 3.2T tokens - 512 80G A800 - ✓ - GPT-3 [55] May-2020 175 - - - 300B tokens - - - ✓ - GShard [104] Jun-2020 600 - - - 1T tokens - 2048 TPU v3 4 d - - Codex [105] Jul-2021 12 GPT-3 - - 100B tokens May-2020 - - ✓ - ERNIE 3.0 [106] Jul-2021 10 - - - 375B tokens - 384 V100 - ✓ - Jurassic-1 [107] Aug-2021 178 - - - 300B tokens - 800 GPU - ✓ - HyperCLOVA [108] Sep-2021 82 - - - 300B tokens - 1024 A100 13.4 d ✓ - FLAN [67] Sep-2021 137 LaMDA-PT ✓ - - - 128 TPU v3 60 h ✓ - Yuan 1.0 [109] Oct-2021 245 - - - 180B tokens - 2128 GPU - ✓ - Anthropic [110] Dec-2021 52 - - - 400B tokens - - - ✓ - WebGPT [81] Dec-2021 175 GPT-3 - ✓ - - - - ✓ - Gopher [64] Dec-2021 280 - - - 300B tokens - 4096 TPU v3 920 h ✓ - ERNIE 3.0 Titan [111] Dec-2021 260 - - - - - - - ✓ - GLaM [112] Dec-2021 1200 - - - 280B tokens - 1024 TPU v4 574 h ✓ - LaMDA [68] Jan-2022 137 - - - 768B tokens - 1024 TPU v3 57.7 d - - MT-NLG [113] Jan-2022 530 - - - 270B tokens - 4480 80G A100 - ✓ - AlphaCode [114] Feb-2022 41 - - - 967B tokens Jul-2021 - - - - InstructGPT [66] Mar-2022 175 GPT-3 ✓ ✓ - - - - ✓ - Chinchilla [34] Mar-2022 70 - - - 1.4T tokens - - - ✓ - PaLM [56] Apr-2022 540 - - - 780B tokens - 6144 TPU v4 - ✓ ✓ AlexaTM [115] Aug-2022 20 - - - 1.3T tokens - 128 A100 120 d ✓ ✓ Sparrow [116] Sep-2022 70 - - ✓ - - 64 TPU v3 - ✓ - WeLM [117] Sep-2022 10 - - - 300B tokens - 128 A100 40G 24 d ✓ - U-PaLM [118] Oct-2022 540 PaLM - - - - 512 TPU v4 5 d ✓ ✓ Flan-PaLM [69] Oct-2022 540 PaLM ✓ - - - 512 TPU v4 37 h ✓ ✓ Flan-U-PaLM [69] Oct-2022 540 U-PaLM ✓ - - - - - ✓ ✓ GPT-4 [46] Mar-2023 - - ✓ ✓ - - - - ✓ ✓ PanGu-Σ [119] Mar-2023 1085 PanGu-α - - 329B tokens - 512 Ascend 910 100 d ✓ - Closed Source PaLM2 [120] May-2023 16 - ✓ - 100B tokens - - - ✓ ✓ 9 2020 2023 2021 1-4 5-8 9-10 1-3 7-10 11-12 T5 GPT-3 WebGPT BLOOMZ Galatica mT0 2019 FLAN InstructGPT GPT-NeoX-20B CodeGen OPT OPT-IML MT-NLG T0 Tk-Instruct GPT-4 GShard UL2 PaLM Flan-T5 Flan-PaLM Sparrow ChatGPT Ernie 3.0 Titan Yuan 1.0 Gopher GLaM mT5 PanGu-𝛂 PLUG LaMDA CPM-2 HyperCLOVA Codex Jurassic-1 Ernie 3.0 Anthropic NLLB Cohere Luminous YaLM 11-12 2022 GLM AlexaTM BLOOM WeLM AlphaCode Chinchilla CodeGeeX Falcon CodeGen2 5-8 LLaMA2 StarCoder PaLM2 Baichuan RWKV MPT InternLM XVERSE QWEN Skywork 9-11 Publicly Available 4-6 1-4 LLaMA PanGu-Σ Bard Pythia Vicuna Baichuan2 Aquila2 Grok-1 FLM Fig.
+3: A timeline of existing large language models (having a size larger than 10B) in recent years.
+The timeline was established mainly according to the release date (e.g., the submission date to arXiv) of the technical paper for a model.
+If there was not a corresponding paper, we set the date of a model as the earliest time of its public release or announcement.
+We mark the LLMs with publicly available model checkpoints in yellow color.
+Due to the space limit of the figure, we only include the LLMs with publicly reported evaluation results.
+GPT-1 2018.06 decoder-only architecture generative pre-training GPT-2 2019.02 unsupervised multitask learner scaling the model size in-context learning exploring scaling limits code pre-training gpt-3.5-turbo 2023.03 excellent comprehensive ability text-davinci-002 2022.03 instruction following code-davinci-002 2022.03 capable code model +code +chat +RLHF +instruction Codex 2021.07 GPT-3 2020.05 GPT-4 2023.03 GPT-3.5 2022.03 text-davinci-003 2022.09 human alignment GPT-4 Turbo 2023.09 longer context window GPT-4 Turbo with vision 2023.09 multimodal ability ChatGPT strong reasoning ability Fig.
+4: A brief illustration for the technical evolution of GPT-series models.
+We plot this figure mainly based on the papers, blog articles and official APIs from OpenAI.
+Here, solid lines denote that there exists an explicit evidence (e.g., the official statement that a new model is developed based on a base model) on the evolution path between two models, while dashed lines denote a relatively weaker evolution relation.
+demonstrates a key capacity leap by scaling of the (nearly same) generative pre-training architecture.","[(generative pre-trained transformer 2, is, unsupervised multitask learner), (generative pre-trained transformer 2, has, relatively small model size), (generative pre-trained transformer 2, has been, fine-tuned)]"
+"• GPT-3.
+GPT-3 [55] was released in 2020, which scaled the model parameters to an ever larger size of 175B.
+In the GPT-3’s paper, it formally introduced the concept of in-context learning (ICL)17, which utilizes LLMs in a few- shot or zero-shot way.
+ICL can teach (or instruct) LLMs to understand the tasks in the form of natural language text.
+With ICL, the pre-training and utilization of LLMs converge to the same language modeling paradigm: pre-training pre- dicts the following text sequence conditioned on the context, while ICL predicts the correct task solution, which can be also formatted as a text sequence, given the task description 17.
+GPT-2 essentially used ICL for unsupervised task learning, though it wasn’t called ICL at that time.
+and demonstrations.
+GPT-3 not only demonstrates very ex- cellent performance in a variety of NLP tasks, but also on a number of specially designed tasks that require the abilities of reasoning or domain adaptation.
+Although the GPT-3’s paper does not explicitly discuss the emergent abilities of LLMs, we can observe large performance leap that might transcend the basic scaling law [30], e.g., larger models have significantly stronger ICL ability (illustrated in the original Figure 1.2 of the GPT-3’s paper [55]).
+Overall, GPT-3 can be viewed as a remarkable landmark in the journey evolving from PLMs to LLMs.
+It has empirically proved that scaling the neural networks to a significant size can lead to a huge increase in model capacity.","[(generative pre-trained transformer 3, scaled, parameters), (generative pre-trained transformer 3, introduced, in-context learning), (in-context-learning, teach, large language models), (pre-training, predicts, text sequence), (in-context learning, predicts, task solution), (generative pre-trained transformer 3, demonstrate, reasoning), (generative pre-trained transformer 3, demonstrate, domain adaptation), (larger model, has, stronger in-context learning), (generative pre-trained transformer 3, is, landmark), (scaling neural network, increase, model capacity)]"
+"Capacity Enhancement.
+Due to the strong capacities, GPT- 3 has been the base model to develop even more capable 10 LLMs for OpenAI.
+Overall, OpenAI has explored two major approaches to further improving the GPT-3 model, i.e., train- ing on code data and alignment with human preference, which are detailed as follows.","[(openai, train, code data), (openai, explore, alignment with human preference)]"
+"• Training on code data.
+A major limitation of the original GPT-3 model (pre-trained on plain text) lies in the lack of the reasoning ability on complex tasks, e.g., completing the code and solving math problems.
+To enhance this ability, Codex [105] was introduced by OpenAI in July 2021, which was a GPT model fine-tuned on a large corpus of GitHub code.
+It demonstrated that Codex can solve very difficult programming problems, and also lead to a significant per- formance improvement in solving math problems [126].
+Further, a contrastive approach [127] to training text and code embedding was reported in January 2022, which was shown to improve a series of related tasks (i.e., linear- probe classification, text search and code search).
+Actually, the GPT-3.5 models are developed based on a code-based GPT model (i.e., code-davinci-002), which indicates that training on code data is a very useful practice to improve the model capacity of GPT models, especially the reasoning ability.
+Furthermore, there is also a speculation that train- ing on code data can greatly increase the chain-of-thought prompting abilities of LLMs [47], while it is still worth further investigation with more thorough verification.","[(generative pre-trained transformer 3, lack, reasoning ability), (openai, introduce, codex), (codex, is, generative pre-trained transformer), (codex, solve, programming problem), (codex, solve, math problem), (contrastive approach, improve, linear-probe classification), (contrastive approach, improve, text search), (contrastive approach, improve, code search)]"
+"• Human alignment.
+The related research of human alignment can be dated back to the year 2017 (or earlier) for OpenAI: a blog article entitled “learning from human preferences”18 was posted on the OpenAI blog describing a work that applied reinforcement learning (RL) to learn from the preference comparisons annotated by humans [79] (similar to the reward training step in the aligning algorithm of InstructGPT in Figure 12).
+Shortly after the release of this RL paper [79], the paper of the Proximal Policy Optimiza- tion (PPO) [128] was published in July 2017, which now has been the foundational RL algorithm for learning from hu- man preferences [66].
+Later in January 2020, GPT-2 was fine- tuned using the aforementioned RL algorithms [79, 128], which leveraged human preferences to improve the capac- ities of GPT-2 on NLP tasks.
+In the same year, another work [129] trained a summarization model for optimizing human preferences in a similar way.
+Based on these prior work, InstructGPT [66] was proposed in January 2022 to improve the GPT-3 model for human alignment, which formally established a three-stage reinforcement learning from human feedback (RLHF) algorithm.
+Note that it seems that the wording of “instruction tuning” has seldom been used in OpenAI’s paper and documentation, which is substituted by supervised fine-tuning on human demonstrations (i.e., the first step of the RLHF algorithm [66]).
+In addition to improving the instruction following capacity, the RLHF algorithm is particularly useful to mitigate the issues of generating harm or toxic content for LLMs, which is key to the safe deploy- ment of LLMs in practice.
+OpenAI describes their approach to alignment research in a technical article [130], which has summarized three promising directions: “training AI systems to use human feedback, to assist human evaluation and to do alignment research”.
+These enhancement techniques lead to the improved 18. https://openai.com/research/learning-from-human-preferences GPT-3 models with stronger capacities, which are called GPT-3.5 models by OpenAI (see the discussion about the OpenAI API in Section 3.1).","[(reinforcement learning, fine-tune, generative pre-trained transformer 2), (summarization model, optimize, human preferences), (instructgpt, improve, generative pre-trained transformer 3), (reinforcement learning from human feedback, mitigate, harm), (reinforcement learning from human feedback, mitigate, toxic content)]"
+"The Milestones of Language Models.
+Based on all the ex- ploration efforts, two major milestones have been achieved by OpenAI, namely ChatGPT [131] and GPT-4 [46], which have largely raised the capacity bar of existing AI systems.
+• ChatGPT.
+In November 2022, OpenAI released the conversation model ChatGPT, based on the GPT models (GPT-3.5 and GPT-4).
+As the official blog article intro- duced [131], ChatGPT was trained in a similar way as InstructGPT (called “a sibling model to InstructGPT” in the original post), while specially optimized for dialogue.
+They reported a difference between the training of ChatGPT and InstructGPT in the data collection setup: human-generated conversations (playing both the roles of user and AI) are combined with the InstructGPT dataset in a dialogue format for training ChatGPT.
+ChatGPT exhibited superior capaci- ties in communicating with humans: possessing a vast store of knowledge, skill at reasoning on mathematical problems, tracing the context accurately in multi-turn dialogues, and aligning well with human values for safe use.
+Later on, the plugin mechanism has been supported in ChatGPT, which further extends the capacities of ChatGPT with existing tools or apps.
+So far, it seems to be the ever most powerful chatbot in the AI history.
+The launch of ChatGPT has a significant impact on the AI research in the future, which sheds light on the exploration of human-like AI systems.","[(chatgpt, raise, capacity bar), (generative pre-trained transformer 4, raise, capacity bar), (openai, release, chatgpt), (chatgpt, optimize, dialogue), (chatgpt, communicate, human), (chatgpt, possess, knowledge), (chatgpt, reason, mathematical problems), (chatgpt, trace, context accurately), (chatgpt, is, most powerful chatbot)]"
+"• GPT-4.
+As another remarkable progress, GPT-4 [46] was released in March 2023, which extended the text input to multimodal signals.
+Overall, GPT-4 has stronger capacities in solving complex tasks than GPT-3.5, showing a large performance improvement on many evaluation tasks.
+A re- cent study [41] investigated the capacities of GPT-4 by con- ducting qualitative tests with human-generated problems, spanning a diverse range of difficult tasks, and showed that GPT-4 can achieve more superior performance than prior GPT models such as ChatGPT.
+Furthermore, GPT-4 responds more safely to malicious or provocative queries, due to a six-month iterative alignment (with an additional safety reward signal in the RLHF training).
+In the technical report, OpenAI has emphasized how to safely develop GPT-4 and applied a number of intervention strategies to mitigate the possible issues of LLMs, such as hallucinations, privacy and overreliance.
+For example, they introduced the mechanism called red teaming [132] to reduce the harm or toxic content generation.
+As another important aspect, GPT- 4 has been developed on a well-established deep learning infrastructure with improved optimization methods.
+They introduced a new mechanism called predictable scaling that can accurately predict the final performance with a small proportion of compute during model training.","[(generative pre-trained transformer 4, takes, multimodal signals), (generative pre-trained transformer 4, shows, performance improvement), (generative pre-trained transformer 4, responds, safely), (openai, apply, intervention strategy), (openai, introduce, red teaming), (openai, introduce, predictable scaling)]"
+"• GPT-4V, GPT-4 turbo, and beyond.
+Based on the work done for GPT-4 [46], OpenAI further released GPT-4V in September 2023, which focused on the safe deployment of the vision capabilities of GPT-4.
+In the GPT-4V’s system card [133], it has extensively discussed the assessment and mitigation of risks related to visually augmented inputs.
+Specially, GPT-4V exhibited strong vision capacities in var- ious application scenarios, showing the great potential as 11 a powerful multimodal learning system.
+More recently, in November 2023, OpenAI released an upgraded generation of GPT-4 model at DevDay, named GPT-4 Turbo, with a series of technical improvements.
+GPT-4 Turbo is featured by the improved model capacity (more capable than GPT- 4), the extended knowledge source (up to April 2023), long context window (up to 128k tokens), optimized model performance (cheaper price), and other useful functional- ity updates (function call, reproducible outputs, etc.).
+At the same time, Assistants API was launched to ease the rapid development of agent-like assistants.
+With this API, developers can easily create goal-oriented assistants within their applications, by leveraging specific instruction, extra knowledge and tool use.
+Furthermore, multimodal capaci- ties (see, hear, and speak) were also enhanced in this new release, supported by GPT-4 Turbo with vision, DALL·E 3, Text-to-speech (TTS), and Listen to voice samples.
+These improvements have greatly extended the capacity scope and enhanced the task performance of GPT models.
+More impor- tantly, the application ecosystem will be greatly strength- ened with the technology upgrade in improved models, APIs, and functionalities.
+Despite the huge progress, there are still limitations with these superior LLMs, e.g., generating hallucinations with factual errors or potentially risky response within some specific context [46].
+More limitations or issues of LLMs will be discussed in Section 7.
+It poses long-standing research challenges to develop more capable, safer LLMs.
+From the perspective of engineering, OpenAI has adopted an iterative deployment strategy [134] to develop the models and products by following a five-stage development and deployment life-cycle, which aims to effectively reduce the potential risks of using the models.
+In the following, we will dive into the technical details in order to have a specific understanding of how they have been developed.","[(generative pre-trained transformer 4v, deploy, vision capabilities), (generative pre-trained transformer 4v, exhibit, vision capacities), (generative pre-trained transformer 4v, is, multimodal learning system), (openai, released, generative pre-trained transformer 4 turbo), (generative pre-trained transformer 4 turbo, extend, knowledge source), (technology upgrade, strengthen, application ecosystem), (large language model, generate, hallucinations), (large language model, generate, factual error), (large language model, generate, risky response), (openai, adopt, iterative deployment)]"
+"3 RESOURCES OF LLMS It is by no means an easy job to develop or reproduce LLMs, considering the challenging technical issues and huge de- mands of computation resources.
+A feasible way is to learn experiences from existing LLMs and reuse publicly avail- able resources for incremental development or experimental study.
+In this section, we briefly summarize the publicly available resources for developing LLMs, including model checkpoints (or APIs), corpora and libraries.",[]
+"3.1 Publicly Available Model Checkpoints or APIs Given the huge cost of model pre-training, well-trained model checkpoints are critical to the study and development of LLMs for the research community.
+Since the parameter scale is a key factor to consider for using LLMs, we cate- gorize these public models into two scale levels (i.e., tens of billions of parameters and hundreds of billions of parameters), which is useful for users to identify the suitable resources ac- cording to their resource budget.
+In addition, for inference, we can directly employ public APIs to perform our tasks, without running the model locally.
+Next, we introduce the publicly available model checkpoints and APIs.","[(well-trained model checkpoints, are, critical)]"
+"Models with Tens of Billions of Parameters.
+Most of the models in this category have a parameter scale ranging from 10B to 20B, except LLaMA [57] and LLaMA2 [99] (con- taining 70B parameters in the largest version), NLLB [91] (containing 54.5B parameters in the largest version), and Falcon [135] (containing 40B parameters in the largest ver- sion).
+Other models within this range include mT5 [83], PanGu-α [84], T0 [28], GPT-NeoX-20B [87], CodeGen [86], UL2 [89], Flan-T5 [69], and mT0 [94].
+Among them, Flan- T5 (11B version) can serve as a premier model for re- search on instruction tuning, since it explores the instruction tuning from three aspects [69]: increasing the number of tasks, scaling the model size, and fine-tuning with chain-of- thought prompting data.
+Besides, CodeGen (11B version), as an autoregressive language model designed for generating code, can be considered as a good candidate for exploring the code generation ability.
+It also introduces a new bench- mark MTPB [86] specially for multi-turn program synthesis, which is composed by 115 expert-generated problems.
+To solve these problems, it requires LLMs to acquire sufficient programming knowledge (e.g., math, array operations, and algorithms).
+More recently, CodeGen2 [97] has been released to explore the impact of choices in model architecture, learning algorithms, and data distributions on the model.
+As another LLM specialized in coding abilities, StarCoder [98] has also achieved excellent results.
+As for multilingual tasks, mT0 (13B version) might be a good candidate model, which has been fine-tuned on multilingual tasks with multilingual prompts.
+Furthermore, PanGu-α [84] shows good perfor- mance in Chinese downstream tasks in zero-shot or few- shot settings, which is developed based on the deep learn- ing framework MindSpore [136].
+Note that PanGu-α [84] holds multiple versions of models (up to 200B parameters), while the largest public version has 13B parameters.
+As a popular LLM, LLaMA (65B version) [57], which contains approximately five times as many parameters as other mod- els, has exhibited superior performance in tasks related to instruction following.
+Compared to LLaMA, LLaMA2 [99] has made more explorations in reinforcement learning from human feedback (RLHF) and developed a chat-oriented version called LLaMA-chat, which generally outperforms ex- isting open-source models across a range of helpfulness and safety benchmarks.
+Due to the openness and effectiveness, LLaMA has attracted significant attention from the research community, and many efforts [137–140] have been devoted to fine-tuning or continually pre-training its different model versions for implementing new models or tools.
+More recently, Falcon [135], as another open-source LLM, has also achieved very excellent performance on open benchmarks.
+It is featured by a more careful data cleaning process to prepare the pre-training data (with a publicly shared dataset RefinedWeb [141]).
+Typically, pre-training models at this scale require hundreds or even thousands of GPUs or TPUs.
+For instance, GPT-NeoX-20B uses 12 supermicro servers, each equipped with 8 NVIDIA A100-SXM4-40GB GPUs, while LLaMA utilizes 2,048 A100-80G GPUs as reported in their original publications.
+To accurately estimate the computation resources needed, it is suggested to use the metrics measuring the number of involved computations such as FLOPS (i.e., FLoating point number Operations Per Second) [30].
+12 LLaMA BenTsao Baize Koala Ziya BELLE LLaMA Adapter Guanaco Alpaca Lora Lawyer LLaMA + chat data + task data LLaVA InstructBLIP Yulan-Chat + task data Multimodal models + task data Data inheritance Model inheritance Vicuna Alpaca Panda PandaGPT Cornucopia Chinese LLaMA TaoLi + chat data + chat data + task data Chinese Alpaca ChatMed + synthetic data Chinese Vicuna Linly-Chinese-LLaMA Open-Chinese-LLaMA + task data LAWGPT RLHF PKU-Beaver Chatbridge OpenFlamingo VisionLLM MiniGPT-4 Goat QiZhenGPT + chat data BiLLa + task data Math Finance Continue pre-training Instruction tuning Law Bilingualism Education Medicine Parameter-efficient fine-tuning Full parameter fine-tuning + chinese data + synthetic data + Alpaca data Fig.
+5: An evolutionary graph of the research work conducted on LLaMA.
+Due to the huge number, we cannot include all the LLaMA variants in this figure, even much excellent work.
+To support incremental update, we share the source file of this figure, and welcome the readers to include the desired models by submitting the pull requests on our GitHub page.","[(fine-tuned language net text-to-text transfer transformer, explore, instruction tuning), (fine-tuned language net text-to-text transfer transformer, increase, number of tasks), (fine-tuned language net text-to-text transfer transformer, scale, model size), (codegen, is, autoregressive language model), (codegen, explore, code generation), (large language model, acquire, programming knowledge), (starcoder, specializes, coding ability), (pangu-α, performs, chinese downstream tasks), (large language model meta ai, performs, instruction following), (large language model meta ai, attract, attention)]"
+"Reddit Links.
+Reddit is a social media platform that enables users to submit links and text posts, which can be voted on by others through “upvotes” or “downvotes”.
+Highly up- voted posts are often considered useful, and can be utilized to create high-quality datasets.
+WebText [26] is a well-known corpus composed of highly upvoted links from Reddit, but it is not publicly available.
+As a surrogate, there is a readily ac- cessible open-source alternative called OpenWebText [157].
+Another corpus extracted from Reddit is PushShift.io [158], a real-time updated dataset that consists of historical data from Reddit since its creation day.
+Pushshift provides not only monthly data dumps but also useful utility tools to support users in searching, summarizing, and conducting 21. https://www.tensorflow.org/datasets/catalog/c4 14 preliminary investigations on the entire dataset.
+This makes it easy for users to collect and process Reddit data.","[(upvoted posts, are, useful), (upvoted links, compose, webtext), (webtext, is not, publicly available), (openwebtext, is, accessible), (pushshift, provide, monthly data), (pushshift, provide, utility tools)]"
+"Wikipedia.
+Wikipedia [159] is an online encyclopedia con- taining a large volume of high-quality articles on diverse topics.
+Most of these articles are composed in an expository style of writing (with supporting references), covering a wide range of languages and fields.
+Typically, the English- only filtered versions of Wikipedia are widely used in most LLMs (e.g., GPT-3 [55], LaMDA [68], and LLaMA [57]).
+Wikipedia is available in multiple languages, so it can be used in multilingual settings.","[(wikipedia, is, online encyclopedia), (wikipedia, contains, high-quality articles), (wikipedia articles, cover, wide range), (large language models, use, wikipedia articles)]"
+"Code.
+To collect code data, existing work mainly crawls open-source licensed codes from the Internet.
+Two major sources are public code repositories under open-source li- censes (e.g., GitHub) and code-related question-answering platforms (e.g., StackOverflow).
+Google has publicly re- leased the BigQuery dataset [160], which includes a substan- tial number of open-source licensed code snippets in various programming languages, serving as a representative code dataset.
+CodeGen has utilized BIGQUERY [86], a subset of the BigQuery dataset, for training the multilingual version of CodeGen (CodeGen-Multi).","[(google, release, bigquery), (bigquery, include, open-source code snippets), (codegen, utilize, bigquery)]"
+"Others.
+The Pile [161] is a large-scale, diverse, and open- source text dataset consisting of over 800GB of data from multiple sources, including books, websites, codes, scientific papers, and social media platforms.
+It is constructed from 22 diverse high-quality subsets.
+The Pile dataset is widely used in models with different parameter scales, such as GPT-J (6B) [165], CodeGen (16B) [86], and Megatron-Turing NLG (530B) [113].
+ROOTS [162] is composed of various smaller datasets (totally 1.61 TB of text) and covers 59 different languages (containing natural languages and pro- gramming languages), which have been used for training BLOOM [78].
+In practice, it commonly requires a mixture of different data sources for pre-training LLMs (see Figure 6), instead of a single corpus.
+Therefore, existing studies commonly mix several ready-made datasets (e.g., C4, OpenWebText, and the Pile), and then perform further processing to obtain the pre-training corpus.
+Furthermore, to train the LLMs that are adaptive to specific applications, it is also important to extract data from relevant sources (e.g., Wikipedia and BigQuery) for enriching the corresponding information in pre-training data.","[(pile, is, text dataset), (pile, contains, book), (pile, contains, website), (pile, contains, code), (pile, contains, scientific paper), (pile, contains, social media), (generative pre-trained transformer j, use, pile), (codegen, use, pile), (megatron-turing natural language generation, use, pile), (roots, cover, languages)]"
+"Commonly Used Datasets for Fine-tuning After pre-training, it requires further fine-tuning LLMs to enhance the model capacity, which often involve two major steps, namely instruction tuning (supervised fine-tuning) and alignment tuning.
+In this section, we mainly focus on discussing the related available datasets for the two kinds of tuning approaches, and more algorithm details can be found in Section 5.","[(fine-tuning, enhance, model capacity), (fine-tuning, involve, instruction tuning), (fine-tuning, involve, alignment tuning), (instruction tuning, enhance, abilities large language model), (instruction tuning, unlock, abilities large language model)]"
+"NLP Task Datasets.
+This kind of datasets are formatted based on collected NLP task datasets (e.g., text classifica- tion and summarization) with corresponding natural lan- guage task descriptions.
+In this category, P3 [182] and FLAN [67, 183] are two widely used datasets for instruction tuning.
+• P3 [182] is composed of 170 English NLP datasets and 2,052 English prompt templates, where the input and output of each data example have been formatted with specific prompt templates for composing the training instance.
+15 • FLAN [67] consists of 62 widely used NLP benchmarks in its original version.
+Recently, FLAN-v2 [183] is also pro- posed, which expands FLAN by mixing additional instruc- tion datasets, including Muffin [67], NIV2 [88], T0-SF [28], and CoT [184–186].
+Muffin contains 62 tasks from the orig- inal FLAN and additional 26 tasks, including conversation and code synthesis tasks.
+T0-SF is extracted from T0 [28] while ensuring no overlap with Muffin.
+NIV2 refers to the Natural-Instructions v2 dataset [88], and CoT [184–186] is a combination of nine reasoning tasks with corresponding chain-of-thought prompts and outputs.","[(fine-tuned language net, widely used, instruction tuning), (p3, widely used, instruction tuning), (muffin, include, conversation task), (muffin, include, code synthesis task)]"
+"Daily Chat Datasets.
+This kind of datasets are constructed based on real user conversations where queries are posed by humans and responses are mainly generated by hu- man labelers or LLMs (e.g., ChatGPT, GPT-4).
+The con- versation types include open-ended generation, question answering, brainstorming, and chatting.
+In this category, ShareGPT [148], OpenAssistant [173] and Dolly [172] are three commonly used datasets for LLM fine-tuning.
+• ShareGPT [148] is collected from a data collection platform where users can upload their conversations with ChatGPT or GPT-4 through the ShareGPT API.
+Currently, this dataset consists of approximately 90,000 conversations, including real instructions or inquiries from human and responses from ChatGPT.
+• OpenAssistant [173] is a multilingual corpus containing 66,497 real-world conversation trees between human and AI assistant.
+Each conversation tree consists of multiple nodes, and each node represents the information generated by a role in the dialogue.
+It spans 35 languages and includes 461,292 manually annotated quality ratings of responses.
+• Dolly [172] is an English dataset comprising 15,000 human-generated data instances (prompt-response pairs) from Databricks.
+This dataset covers seven domains out- lined in the InstructGPT [66], including brainstorming, clas- sification, closed-book quality assurance, generation, infor- mation extraction, open-book quality assurance, and sum- marization.","[(sharegpt, is, daily chat datset), (openassistent, is, daily chat dataset), (dolly, is, daily chat dataset), (openassistant, is, multilingual corpus), (openassistant, spans, 35 languages), (dolly, comprise, human-generated data), (dolly, covers, 7 domains)]"
+"Synthetic Datasets.
+This kind of datasets are typically constructed by instructing LLMs, based on pre-defined guidance rules or methods.
+In this category, Self-Instruct- 52K [143], Alpaca [142] and Baize [175] are three commonly used synthetic datasets for LLMs.
+• Self-Instruct-52K [143] is an instruction dataset gener- ated through the self-instruct [143] method, consisting of 82,000 instances with 52,000 instructions.
+Concretely, the authors construct 175 seed instances, and then iteratively prompt the LLM [55] to synthesize additional instructions based on randomly selected 8 instructions as reference.
+Subsequently, the LLM is further instructed to generate in- stance inputs and their corresponding outputs based on the synthetic instructions, and finally obtain the Self-Instruct- 52K dataset.
+• Alpaca [142] is also a synthetic dataset based on the self- instruct [143] method.
+It utilizes the text-davinci-003 model on the 175 seed datasets from Self-Instruct-52K to obtain 52,000 new instructions and corresponding inputs and outputs.
+Moreover, 60% of the examples are pure in- structions without the input part in the final dataset.
+• Baize [175] is an English multi-turn conversation corpus constructed using ChatGPT, comprising 111.5K instances.
+To create Baize, a method called “self-chat” [175] is purposed, where ChatGPT takes on the roles of both the user and the AI assistant in turns, generating information in a conversa- tional format.","[(self-instruct-52k, is, synthetic dataset), (alpaca, is, synthetic dataset), (baize, is, synthetic dataset), (baize, is, multi-turn conversation corpus)]"
+"4 PRE-TRAINING Pre-training establishes the basis of the abilities of LLMs.
+By pre-training on large-scale corpora, LLMs can acquire essen- tial language understanding and generation skills [55, 56].
+In this process, the scale and quality of the pre-training corpus are critical for LLMs to attain powerful capabilities.
+Fur- thermore, to effectively pre-train LLMs, model architectures, acceleration methods, and optimization techniques need to be well designed.
+In what follows, we first discuss the data collection and processing in Section 4.1, then introduce the commonly used model architectures in Section 4.2, and fi- nally present the training techniques to stably and efficiently optimize LLMs in Section 4.3.","[(large language model, acquire, language understanding), (large language model, acquire, generation skill)]"
+"4.1 Data Collection and Preparation Compared with small-scale language models, LLMs have a stronger demand for high-quality data for model pre- training, and their model capacities largely rely on the pre- training corpus and how it has been preprocessed.
+In this part, we discuss the collection and processing of pre-training data, including data sources, preprocessing methods, and important analysis of how pre-training data affects the performance of LLMs.
+17 PaLM (540B) 5% 14% 50% 31% GPT-3 (175B) 16% 84% LLaMA (65B) 5% 2% 87% Chinchilla (70B) 4% 40% 56% Galactica (120B) 7% 86% 8% T5 (11B) 100% CodeGen (16B) 39% 25% 10% 6% 20% GPT-NeoX (20B) 8% 38% 15% 10% 30% Gopher (280B) 3% 37% 60% LaMDA (137B) 13% 50% 38% MT-NLG (530B) 2% 4% 26% 6% 62% GLaM (1200B) 22% 30% 48% AlphaCode (41B) 100% Falcon (40B) 100% 3% 5% 📚 BookCorpus (5G, 2015), 📚 Gutenberg (-, 2021), 📚 CC-Stories-R (31G, 2019), 📰 CC-NEWES (78G, 2019), 📰 REALNEWs (120G, 2019) 💬 the Pile - StackExchange (41G, 2020) 💻 C4 (800G, 2019), 💻 OpenWebText (38G, 2023), 💻 Wikipedia (21G, 2023) 🔬 the Pile - ArXiv (72G, 2020), 🔬 the Pile - PubMed Abstracts (25G, 2020) ⌨ BigQuery (-, 2023), the Pile - GitHub (61G, 2020) Fig.
+6: Ratios of various data sources in the pre-training data for existing LLMs.
+4.1.1 Data Source To develop a capable LLM, it is key to collect a large amount of natural language corpus from various data sources.
+Ex- isting LLMs mainly leverage a mixture of diverse public textual datasets as the pre-training corpus.
+Figure 6 shows the distribution of the sources of pre-training data for a number of representative LLMs.
+The source of pre-training corpus can be broadly cate- gorized into two types: general data and specialized data.
+General data, such as webpages, books, and conversational text, is utilized by most LLMs [55, 56, 90] due to its large, diverse, and accessible nature, which can enhance the lan- guage modeling and generalization abilities of LLMs.
+In light of the impressive generalization capabilities exhibited by LLMs, there are also studies that extend their pre-training corpus to more specialized datasets, such as multilingual data, scientific data, and code, endowing LLMs with specific task-solving capabilities [35, 56, 86].
+In what follows, we describe these two types of pre-training data sources and their effects on LLMs.
+For a detailed introduction to the commonly used corpus, one can refer to Section 3.2.","[(large language model capacity, rely on, pre-training corpus), (large language model, leverage, public textual dataset), (large language model, utilize, webpage), (large language model, utilize, book), (large language model, utilize, conversational text), (large language model, exhibit, generalization capabilities)]"
+"General Text Data.
+As we can see in Figure 6, the vast majority of LLMs adopt general-purpose pre-training data, such as webpages, books, and conversational text, which provides rich text sources on a variety of topics.
+Next, we briefly summarize three important kinds of general data.
+• Webpages.
+Owing to the proliferation of the Internet, various types of data have been created, which enables LLMs to gain diverse linguistic knowledge and enhance their generalization capabilities [26, 82].
+For convenient use of these data resources, a large amount of data is crawled from the web in previous work, such as Com- monCrawl [163].
+However, the crawled web data tends to contain both high-quality text, such as Wikipedia and low- quality text, like spam mail, thus it is important to filter and process webpages for improving the data quality.
+• Conversation text.
+Conversation data can enhance the conversational competence of LLMs [90] and potentially im- prove their performance on a range of question-answering tasks [56].
+Researchers can utilize subsets of public conver- sation corpus (e.g., PushShift.io Reddit corpus) [158, 202] or collect conversation data from online social media.
+Since on- line conversational data often involves discussions among multiple participants, an effective processing way is to transform a conversation into a tree structure, where the utterance is linked to the one it responds to.
+In this way, the multi-party conversation tree can be divided into multiple sub-conversations, which can be collected in the pre-training corpus.
+Furthermore, a potential risk is that the excessive integration of dialogue data into LLMs may result in a side effect [90]: declarative instructions and direct interrogatives are erroneously perceived as the beginning of conversations, thus leading to a decline in the efficacy of the instructions.
+• Books.
+Compared to other corpus, books provide an important source of formal long texts, which are potentially beneficial for LLMs to learn linguistic knowledge, model long-term dependency, and generate narrative and coherent texts.
+To obtain open-source book data, existing studies usually adopt the Books3 and Bookcorpus2 datasets, which are available in the Pile dataset [161].","[(large language model, adopt, general-purpose pre-training data), (large language model, gain, linguistic knowledge), (large language model, enhance, generalization capabilities), (conversation data, enhance, conversational competence), (books, provide, formal long text)]"
+"Specialized Text Data.
+Specialized datasets are useful to improve the specific capabilities of LLMs on downstream tasks.
+Next, we introduce three kinds of specialized data.
+• Multilingual text.
+In addition to the text in the target language, integrating a multilingual corpus can enhance the multilingual abilities of language understanding and generation.
+For example, BLOOM [78] and PaLM [56] have curated multilingual data covering 46 and 122 languages, respectively, within their pre-training corpora.
+FLM [102] mixes Chinese and English corpora in nearly equal propor- tions.
+These models demonstrate impressive performance in multilingual tasks, such as translation, multilingual summa- rization, and multilingual question answering, and achieve comparable or superior performance to the state-of-the- art models that are fine-tuned on the corpus in the target language(s).","[(multilingual corpus, enhance, multilingual abilities), (multilingual corpus, enhance, language understanding), (multilingual corpus, enhance, language generation), (bloom, curate, multilingual data), (pathways language model, curate, multilingual data), (factored language model, mix, chinese and english corpora), (bloom, perform, multilingual task), (pathways language model, perform, multilingual task), (factored language model, perform, multilingual task)]"
+"18 • Scientific text.
+The exploration of science by humans has been witnessed by the increasing growth of scientific publi- cations.
+In order to enhance the understanding of scientific knowledge for LLMs [35, 203], it is useful to incorporate a scientific corpus for model pre-training [35, 203].
+By pre- training on a vast amount of scientific text, LLMs can achieve impressive performance in scientific and reasoning tasks [204].
+To construct the scientific corpus, existing efforts mainly collect arXiv papers, scientific textbooks, math web- pages, and other related scientific resources.
+Due to the com- plex nature of data in scientific fields, such as mathematical symbols and protein sequences, specific tokenization and preprocessing techniques are usually required to transform these different formats of data into a unified form that can be processed by language models.","[(large language model, understand, scientific knowledge), (large language model, perform, scientific task), (large language model, perform, reasoning task), (scientific data, has, complex nature), (language model, process, unified form)]"
+"• Code.
+Program synthesis has been widely studied in the research community [105, 205–208], especially the use of PLMs trained on code [165, 209].
+However, it remains chal- lenging for these PLMs (e.g., GPT-J [165]) to generate high- quality and accurate programs.
+Recent studies [105, 208] have found that training LLMs on a vast code corpus can lead to a substantial improvement in the quality of the synthesized programs.
+The generated programs can successfully pass expert-designed unit-test cases [105] or solve competitive programming questions [114].
+In gen- eral, two types of code corpora are commonly used for pre-training LLMs.
+The first source is from programming question answering communities like Stack Exchange [210].
+The second source is from public software repositories such as GitHub [86, 105, 208], where code data (includ- ing comments and docstrings) are collected for utilization.
+Compared to natural language text, code is in the format of a programming language, corresponding to long-range dependencies and accurate execution logic [211].
+A recent study [47] also speculates that training on code might be a source of complex reasoning abilities (e.g., chain-of-thought ability [33]).
+Furthermore, it has been shown that formatting reasoning tasks into code can help LLMs generate more accurate results [211].","[(pre-trained language model, train, on code), (pre-trained language models, have challenge, generating high-quality accurate programs), (stack exchange, is, question answering community), (github, is, public software repository), (training on code, creates, complex reasoning abilities)]"
+"4.1.2 Data Preprocessing After collecting a large amount of text data, it is essential to preprocess the data for constructing the pre-training corpus, especially removing noisy, redundant, irrelevant, and potentially toxic data [56, 64, 212], which may largely affect the capacity and performance of LLMs.
+To facilitate the data processing, a recent study [213] proposes a useful data processing system for LLMs, named Data-Juicer, which provides over 50 processing operators and tools.
+In this part, we review the detailed data preprocessing strategies to improve the quality of the collected data [64, 78, 112].
+A typical pipeline of preprocessing the pre-training data for LLMs has been illustrated in Figure 7.","[(preprocessing, remove, noisy data), (preprocessing, remove, redundant data), (preprocessing, remove, irrelevant data), (preprocessing, remove, toxic data), (noisy data, affect, performance large language model), (redundant data, affect, performance large language model), (irrelevant data, affect, performance large language model), (toxic data, affect, performance large language model), (data-juicer, is, processing system)]"
+"Quality Filtering.
+To remove low-quality data from the collected corpus, existing work generally adopts two ap- proaches: (1) classifier-based, and (2) heuristic-based.
+The former approach trains a selection classifier based on high- quality texts and leverages it to identify and filter out low- quality data.
+Typically, these methods [55, 56, 112] train a binary classifier with well-curated data (e.g., Wikipedia pages) as positive instances and sample candidate data as negative instances, and predict the score that measures the quality of each data example.
+However, several stud- ies [64, 112] find that a classifier-based approach may result in the unintentional removal of high-quality texts in dialec- tal, colloquial, and sociolectal languages, which potentially leads to bias in the pre-training corpus and diminishes the corpus diversity.
+As the second approach, several studies, such as BLOOM [78] and Gopher [64], employ heuristic- based approaches to eliminate low-quality texts through a set of well-designed rules, which can be summarized as follows: • Language based filtering.
+If a LLM would be mainly used in the tasks of certain languages, the text in other lan- guages can be filtered.
+• Metric based filtering.
+Evaluation metrics about the gener- ated texts, e.g., perplexity, can be employed to detect and remove unnatural sentences.
+• Statistic based filtering.
+Statistical features of a corpus, e.g., the punctuation distribution, symbol-to-word ratio, and sentence length, can be utilized to measure the text quality and filter the low-quality data.
+• Keyword based filtering.
+Based on specific keyword set, the noisy or unuseful elements in the text, such as HTML tags, hyperlinks, boilerplates, and offensive words, can be identified and removed.","[(classifier-based approach, train, selection classifier), (classifier-based approach, filter, low-quality data), (classifier-based approach, train, binary classifier), (classifier-based approach, remove, high-quality text), (bloom, employ, heuristic-based approach), (gopher, employ, heuristic-based approach), (bloom, eliminate, low-quality text), (gopher, eliminate, low-quality text), (language based filtering, filter, text in other language), (perplexity, detect, unnatural sentences)]"
+"De-duplication.
+Existing work [214] has found that dupli- cate data in a corpus would reduce the diversity of language models, which may cause the training process to become un- stable and thus affect the model performance.
+Therefore, it is necessary to de-duplicate the pre-training corpus.
+Specially, de-duplication can be performed at different granularities, including sentence-level, document-level, and dataset-level de-duplication.
+First, low-quality sentences that contain re- peated words and phrases should be removed, as they may introduce repetitive patterns in language modeling [215].
+At the document level, existing studies mostly rely on the overlap ratio of surface features (e.g., words and n-grams overlap) between documents to detect and remove duplicate documents containing similar contents [57, 64, 78, 216].
+Furthermore, to avoid the dataset contamination problem, it is also crucial to prevent the overlap between the training and evaluation sets [56], by removing the possible duplicate texts from the training set.
+It has been shown that the three levels of de-duplication are useful to improve the training of LLMs [56, 217], which should be jointly used in practice.","[(duplicate data, reduce, diversity language model), (duplicate data, cause, unstable training process), (duplicate data, affect, model performance), (de-duplication, remove, low-quality sentences), (low-quality sentences, introduce, repetitive pattern), (de-duplication, improve, training large language model)]"
+"Privacy Reduction.
+The majority of pre-training text data is obtained from web sources, including user-generated con- tent involving sensitive or personal information, which may increase the risk of privacy breaches [218].
+Thus, it is nec- essary to remove the personally identifiable information (PII) from the pre-training corpus.
+One direct and effective ap- proach is to employ rule-based methods, such as keyword spotting, to detect and remove PII such as names, addresses, and phone numbers [162].
+Furthermore, researchers also find that the vulnerability of LLMs under privacy attacks can be attributed to the presence of duplicate PII data in the pre-training corpus [219].
+Therefore, de-duplication can also 19 Language Filtering Metric Filtering Statistic Filtering Keyword Filtering Raw Corpus Quality Filtering De-duplication Sentence-level Document-level Set-level Privacy Reduction Tokenization Ready to  pre-train!
+32, 145, 66, 79, 12, 56, ... Alice is writing a paper about LLMs.
+#$^& Alice is writing a paper about LLMs.
+Alice is writing a paper about LLMs.
+Alice is writing a paper about LLMs.
+Replace('Alice') is writing a paper about LLMs.
+Encode('[Somebody] is writing a paper about LLMs.')
+Detect Personality Identifiable Information (PII)  Remove PII Reuse Existing Tokenizer SentencePiece Byte-level BPE Fig.
+7: An illustration of a typical data preprocessing pipeline for pre-training large language models.
+reduce privacy risks to some extent.","[(user-generated content, involve, sensitive information), (user-generated content, involve, personal information), (sensitive information, risk, privacy breach), (personal information, risk, privacy breach), (keyword spotting, remove, personally identifiable information), (de-duplication, reduce, privacy risk)]"
+"Tokenization.
+Tokenization is also a crucial step for data preprocessing.
+It aims to segment raw text into sequences of individual tokens, which are subsequently used as the inputs of LLMs.
+In traditional NLP research (e.g., sequence labeling with conditional random fields [220]), word-based tokenization is the predominant approach, which is more aligned with human’s language cognition.
+However, word- based tokenization can yield different segmentation results for the same input in some languages (e.g., Chinese word segmentation), generate a huge word vocabulary containing many low-frequency words, and also suffer from the “out- of-vocabulary” issue.
+Thus, several neural network models employ character as the minimum unit to derive the word representation (e.g., a CNN word encoder in ELMo [21]).
+Recently, subword tokenizers have been widely used in Trans- former based language models, typically including Byte- Pair Encoding tokenization, WordPiece tokenization and Unigram tokenization.
+HuggingFace has maintained an excellent online NLP course on tokenizer22 with running examples, and we refer to the beginners to this course.
+Next, we briefly describe the three representative tokenization methods.","[(tokenization, segment, raw text), (word-based tokenization, align, human;s language cognition), (word-based tokenization, suffer, out-of-vocacbulary issue), (transformer based model, use, subword tokenizer), (subword tokenizer, include, byte-pair encoding tokenization), (subword tokenizer, include, wordpiece tokenization), (subword tokenizer, include, unigram tokenization)]"
+"• Byte-Pair Encoding (BPE) tokenization.
+BPE was origi- nally proposed as a general data compression algorithm in 1994 [221], and then adapted to NLP for tokenization [222].
+It starts with a set of basic symbols (e.g., the alphabets and boundary characters), and iteratively combine frequent pairs of two consecutive tokens in the corpus as new to- kens (called merge).
+For each merge, the selection criterion is based on the co-occurrence frequency of two contigu- ous tokens: the top frequent pair would be selected.
+The merge process continues until it reaches the predefined size.
+Further, Byte-level BPE has been used to improve the tokenization quality for multilingual corpus (e.g., the text containing non-ASCII characters) by considering bytes as the basic symbols for merge.
+Representative language models with this tokenization approach include GPT-2, BART, and LLaMA.","[(byte-pair encoding, improve, tokenization quality multilingual corpus), (generative pre-trained transformer 2, use, byte-pair encoding), (bidirectional auto-regressive transformer, use, byte-pair encoding), (large language model architecture, use, byte-pair encoding)]"
+"• WordPiece tokenization.
+WordPiece was a Google inter- nal subword tokenization algorithm.
+It was originally pro- posed by Google in developing voice search systems [223].
+Then, it was used in the neural machine translation system in 2016 [224], and was adopted as the word tokenizer for BERT in 2018 [23].
+WordPiece has a very similar idea with BPE by iteratively merging consecutive tokens, whereas 22. https://huggingface.co/learn/nlp-course/chapter6 taking a slightly different selection criterion for the merge.
+To conduct the merge, it first trains a language model and employs it to score all possible pairs.
+Then, at each merge, it selects the pair that leads to the most increase in the likeli- hood of training data.
+Since Google has’t released the official implementation of the WordPiece algorithm, HuggingFace gives a more intuitive selection measure in its online NLP course: a pair is scored by dividing the co-occurrence count by the product of the occurrence counts of two tokens in the pair based on training corpus.","[(wordpiece, is, google internal algorithm), (neural machine translation system, use, wordpiece), (bidirectional encoder representation from transformer, use, wordpiece), (wordpiece, merge, consecutive tokens), (wordpiece, train, language model), (google, not release, official wordpiece algorithm)]"
+"• Unigram tokenization.
+Unlike BPE and WordPiece, Un- igram tokenization [225] starts with a sufficiently large set of possible substrings or subtokens for a corpus, and iteratively removes the tokens in the current vocabulary until the expected vocabulary size is reached.
+As the se- lection criterion, it calculates the yielded increase in the likelihood of training corpus by assuming that some to- ken was removed from current vocabulary.
+This step is conducted based on a trained unigram language model.
+To estimate the unigram language model, it adopts an expectation–maximization (EM) algorithm: at each iteration, we first find the currently optimal tokenization of words based on the old language model, and then re-estimate the probabilities of unigrams to update the language model.
+During this procedure, dynamic programming algorithms (i.e., the Viterbi algorithm) are used to efficiently find the optimal decomposition way of a word given the language model.
+Representative models that adopt this tokenization approach include T5 and mBART.
+Although it is expedient to leverage an existing tokenizer (e.g., OPT [90] and GPT-3 [55] utilize the tokenizer of GPT- 2 [26]), using a tokenizer specially designed for the pre- training corpus can be highly beneficial [78], especially for the corpus that consists of diverse domains, languages, and formats.
+Therefore, recent LLMs often train the customized tokenizers specially for the pre-training corpus with the SentencePiece library [226], which includes Byte-level BPE and Unigram tokenization.
+A note is that normalization techniques in BPE, such as NFKC [227], may degrade the tokenization performance [34, 64, 78].
+When extending existing LLMs (i.e., continual pre-training or instruction tuning), we should be also aware of the potential side effect with customized tokenizers.
+For example, LLaMA trains the BPE tokenizer based on a pre-training corpus mainly consisting of English texts, and the derived vocabulary might be less capable in processing non-English data, e.g., taking longer inference latency to generate Chinese texts.
+20 Data Curriculum Stage 1 ··· Stage 2 Stage  Data Mixture Data Source  Stage  1 2 3 4 Fig.
+8: An illustration of data scheduling for pre-training LLMs.","[(unigram tokenization, iteratively remove, tokens), (unigram tokenization, adopt, expectation-maximization algorithm), (unigram tokenization, use, dynamic programming algorithm), (text-to-text transfer transformer, adopt, unigram tokenization), (bidirectional auto-regressive transformer, adopt, unigram tokenization), (recent large language model, train, customized tokenizer), (sentencepiece library, include, byte-level byte-pair encoding), (sentencepiece library, include, unigram tokenization), (normalization techniques, degrade, tokenization performance), (large language model architecture, train, byte-pair encoding tokenizer)]"
+"Discussion on Effect of Data Quality.
+For pre-training, the quality of pre-training data is vital to the model capacities of LLMs.
+Existing work has shown that pre-training on the low-quality corpus, such as noisy, toxic, and duplicate data, would largely hurt the performance of models [64, 214, 216, 219].
+Recent studies, such as T5 [82], GLaM [112], and Gopher [64], have investigated the influence of data quality on the LLMs’ capacities.
+By comparing the performance of models trained on the filtered and unfiltered corpus, they have reached the similar conclusion that pre-training LLMs on cleaned data can improve the model performance.
+More specifically, the duplication of data may result in “double descent” (referring to the phenomenon of performance ini- tially deteriorating and subsequently improving) [214, 228], or even overwhelm the training process [214].
+In addition, it has been shown that duplicate data degrades the ability of LLMs to copy from the context, which might further affect the generalization capacity of LLMs using in-context learning [214].
+Therefore, as suggested in [56, 64, 78, 212], it is essential to utilize preprocessing methods like quality filtering, toxic filtering and deduplication to carefully clean the pre-training corpus (as illustrated in Section 4.1.2), to improve stability of the training process and avoid affecting the model performance.","[(low-quality corpus, hurts, performance large language model), (clean data, improve, performance large language model), (data duplication, result, double descent), (data duplication, overwhelm, training process), (duplicate data, degrade, ability to copy context), (duplicate data, affect, generalization capacity large language model), (preprocessing corpus, improve, stability training process)]"
+"4.1.3 Data Scheduling After data preprocessing, it is essential to design suit- able strategies to schedule these multi-source data for pre- training a capable LLM.
+Generally, two key aspects should be paid close attention for data scheduling: the proportion of each data source (data mixture), and the order in which each data source is scheduled for training (data curriculum).
+Next, we discuss the two aspects in detail.
+An illustration of data scheduling has been presented in Figure 8.
+Data Mixture.
+Since each kind of data source is closely related to the development of certain capacities for LLMs (referring to the discussions in Section 4.1), it is important to set a suitable distribution to mix these data.
+The data mixture is generally set in a global level (i.e., the distribution of the entire pre-training data), and can be also locally set to varied proportions at different training stages.
+During pre-training, data samples from different sources would be selected according to the mixture proportions: more data will be sampled from a data source with a larger weight.
+Typically, existing LLMs such as LLaMA [57] may employ upsampling or downsampling on the full data of each source to create specific data mixtures as pre-training data.
+As Figure 6 illustrates, existing LLMs use different data mix- tures to construct the pre-training data.
+As a representative model, the pre-training data of LLaMA [57] mainly consists of webpages (over 80%), alongside 6.5% of code-heavy data from GitHub and StackExchange, 4.5% from books, and 2.5% of scientific data sourced from arXiv, which has become an important reference for training general-purpose LLMs.
+Furthermore, special data mixtures can be used to facilitate different purposes.
+For example, Falcon [141] is trained on pure webpages, and CodeGen [86] largely increases the amount of code data.
+In practice, data mixture is often de- termined empirically, and we summarize several common strategies for finding an effective data mixture as follows: ","[(data mixture, generally set, global level), (falcon, trained, pure webpages), (codegen, increase, code data), (data mixture, determined, emipiraclly)]"
+"• Increasing the diversity of data sources.
+Recent studies have empirically shown that training on excessive data about a certain domain would degrade the generalization capability of LLMs on other domains [35, 64].
+In contrast, increasing the data source heterogeneity (e.g., including diverse data sources) is critical for improving the down- stream performance of LLMs [212, 229, 230].
+To further examine the effect of different data sources, some studies have conducted ablation experiments by removing each data source one by one, and pre-train LLMs with specially curated datasets [212].
+It has been shown that dropping data sources with high heterogeneity (e.g., webpages) impacts LLM’s abilities more severely than dropping sources with low heterogeneity (e.g., academic corpus).","[(excessive domain data, degrade, generalization capability large language model), (source heterogeneity, improve, downstream performance large language model), (high heterogeneity data source, impact, large language model ability)]"
+"• Optimizing data mixtures.
+In addition to manually set- ting the data mixtures, several studies have proposed to optimize the data mixtures for improving the model pre- training [59, 231].
+Given the target downstream tasks, one can select pre-training data with either higher proximity in the feature space [231] or those that provide positive influences on downstream task performance [232].
+Further, to reduce the reliance of target tasks, DoReMi [59] first trains a small reference model using given initial domain weights, and then trains another small proxy model, upweighting the domains on which the greatest discrepancies in likelihood between the two models are observed.
+Finally, the learned domain weights of the proxy model are applied to train a much larger LLM.
+In a more simple way, one can train several small language models with different data mixtures, and select the data mixture that leads to the most desir- able performance.
+However, an assumption made in this approach is, when trained in a similar way, small models would resemble with large models in model abilities or behaviors, which may not always hold in practice.","[(domain reweighting with minimax optimization, train, reference model), (domain reweighting with minimax optimization, train, proxy model)]"
+"• Specializing the targeted abilities.
+The model capacities of LLMs heavily rely on data selection and mixture, and one can boost the proportions of specific data sources to enhance certain model abilities [64, 212].
+For example, the mathematical reasoning and coding abilities can be specially enhanced by training with more mathematical texts and code data, respectively.
+Furthermore, experimental results on the LAMBADA dataset [233] show that increasing the proportion of books data can improve the model capacity in capturing long-term dependencies from text, and increasing the proportion of the C4 dataset [82] leads to performance improvement on the C4 validation dataset [64].
+Generally, it is important to identify more implicit relations between 21 data sources and model abilities.
+To enhance specific skills such as mathematics and coding in LLMs, or to develop specialized LLMs, a practical way is to employ a multi-stage training approach, e.g., general and skill-specific data can be scheduled at two consecutive stages.
+This approach of training LLMs on varying sources or proportions of data across multiple stages is also known as “data curriculum”, which will be introduced below.","[(large language model capacities, rely on, data selection), (large language model capacities, rely on, data mixture), (mathematical texts, enhance, mathematical reasoning large language model), (code data, enhance, coding ability large language model), (book data, improve, capturing long-term dependencies), (multi-stage training, improve, specific skill large language model)]"
+"Data Curriculum.
+After preparing the data mixture, it is important to schedule the order that specific data is presented to LLMs for pre-training.
+It has been shown that, in some cases, to learn a certain skill, learning in a skill- set sequence (e.g., basic skills → target skill) outperforms direct learning from a corpus focused solely on the target skill [234, 235].
+Following the idea of curriculum learn- ing [236], data curriculum has been proposed and widely used in model pre-training [234, 235, 237, 238].
+It aims to organize different parts of pre-training data for LLMs in a specific order, e.g., starting with easy/general examples and progressively introducing more challenging/special- ized ones.
+More generally, it can broadly refer to the adap- tive adjustment of data proportions for different sources during pre-training.
+Existing work about data curriculum mainly focuses on continual pre-training, such as special- ized coding LLMs (e.g., CodeLLaMA [235]) or long context LLMs (e.g., LongLLaMA [238]).
+However, it still lacks of more detailed report about data curriculum for general- purpose LLMs (e.g., LLaMA) in the literature.
+To determine data curriculum, a practical approach is to monitor the de- velopment of key abilities of LLMs based on specially con- structed evaluation benchmarks, and then adaptively adjust the data mixture during pre-training.
+Next, we take three common abilities as examples to introduce how the concept of data curriculum23 applies in continual pre-training.","[(data curriculum, organize, pre-training data order), (data curriculum, adjust, data proportion)]"
+"• Coding.
+To improve the coding ability of LLMs, CodeL- LaMA [235] is developed based on LLaMA 2 [99] (2T general tokens → 500B code-heavy tokens), aiming to improve the code generation ability and retain natural language under- standing skills.
+CodeLLaMA also provides a version that is further specialized to a certain programming language, namely CodeLLaMA-Python (2T general tokens → 500B code-heavy tokens → 100B Python-heavy tokens).
+• Mathematics.
+Llemma [239] is proposed to enhance the mathematical capacities of general-purpose LLMs.
+It is developed based on CodeLLaMA.
+Although CodeL- LaMA [235] mainly focuses on the coding ability, exper- iments have shown that it performs better than its base model LLaMA 2 on mathematics benchmarks [239].
+Based on CodeLLaMA, Llemma is continually trained on mixtures of scientific papers, web data containing mathematical text and code (2T general tokens → 500B code-heavy tokens → 50∼200B math-heavy tokens).
+Note that the pre-training data of Llemma also contains 5% general domain data as a form of regularization.","[(code large language model architecture, improve, code generation ability), (code large language model architecture, retain, natural language understanding), (code large language model architecture python, specialized, programming language), (llemma, enhance, mathematical capacities), (code large language model architecture, focus, coding ability), (llemmal, trained, mixture scientific paper)]"
+"• Long context.
+Long context modeling is an important ability for LLMs, and many studies have explored extend- 23.
+We utilize the symbol “→” to represent the data order in data curriculum.
+For example, “2T webpage tokens → 500B code tokens” means that the LLM is firstly trained with 2T webpage tokens and subsequently with 500B code data tokens.
+ing the context windows of LLMs via continually train- ing [235, 238].
+With modifications on position embeddings (i.e., position interpolation) of RoPE-based LLMs [57, 99, 240], CodeLLaMA further extends the context window of LLaMA 2 (2.5T tokens with 4K context window → 20B tokens with 16K context window).
+LongLLaMA [238] also achieves longer context window with the help of external memory and a unique training objective (1T tokens with 2K context window → 10B tokens with 8K context window).","[(long context modeling, is, ability large language model), (long large language model architecture, achieves, longer context window)]"
+"4.1.4 Summary of Data Preparation In this part, we summarize the general procedure and key points to prepare pre-training data for LLMs, which are detailed in the following three aspects.
+• Data collection.
+It is suggested to include diverse data sources in the pre-training data.
+Although Falcon [141] shows that webpages alone can be employed to train power- ful LLMs, a more typical approach is to also incorporate di- verse high-quality text like code, books, scientific papers, etc.
+If a LLM is specialized with a certain skill, the proportion of corresponding data source should be increased accordingly.
+For example, Gopher [64] and Chinchilla [34] are trained with approximately 40% of data from books.
+PaLM [44] and LaMDA [68] use approximately 50% conversational data.","[(gopher, train, 40% book data), (chinchilla, train, 40% book data), (pathways language model, use, 50% conversational data), (language model dialogue applications, use, 50% converstional data)]"
+"• Data cleaning.
+After data collection, it is crucial to clean the raw corpus to enhance its quality as possible.
+First, deduplication is commonly used in existing work [99, 141, 229].
+Second, low-quality text, toxic content, and data with privacy concerns should be removed at different granulari- ties (e.g., document, passage or sentence).
+In practice, both heuristic and classifier-based methods can be employed for quality and toxicity filtering (e.g., CCNet [241], fast- Text [242], and Data-Juicer [243]).
+Third, with the cleaned data, one can further unify or specify the format for pre- training data, and perform the tokenization by training the tokenizer on the filtered and deduplicated corpus with libraries like SentencePiece [226].","[(ccnet, does, toxicity filtering), (fasttext, does, toxicity filtering), (data-juicer, does, toxicity filtering)]"
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
