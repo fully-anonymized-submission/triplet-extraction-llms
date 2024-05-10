@@ -24,3 +24,15 @@ pip install -r requirements.txt
 
 ### Data :page_facing_up:
 The manually annotated training and test data originates from the paper [_"A Survey of Large Language Models"_](https://arxiv.org/abs/2303.18223).
+
+### Parameter settings
+For the parameter-efficient fine-tuning (PEFT), the following parameter settings are used:
+
+| **Parameter**               | **Value** |
+|-----------------------------|-----------|
+| LoRa alpha                  | 64        |
+| LoRa dropout                | 0.1       |
+| LoRa r                      | 32        |
+| Learning rate               | 0.0003    |
+| Gradient accumulation steps | 4         |
+| Weight decay                | 0.001     |
