@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ### Data :page_facing_up:
 The manually annotated training and test data originates from the paper [_"A Survey of Large Language Models"_](https://arxiv.org/abs/2303.18223).
 
-### Parameter settings
+### Parameter settings :pencil2:
 For the parameter-efficient fine-tuning (PEFT), the following parameter settings are used:
 
 | **Parameter**               | **Value** |
