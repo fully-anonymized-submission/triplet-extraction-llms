@@ -14,8 +14,6 @@ This github repository provides the code that belongs to the paper "Extracting s
 \
 -- ```requirements.txt```: File with environment requirements
 
-### Requirements 
-
 ### Environment :mag:
 The file ```requirements.txt``` contains the requirements needed, which are compatible with python 3.11.7. Using the following code snippet, an environment can be created:
 
